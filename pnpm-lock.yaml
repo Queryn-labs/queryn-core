@@ -21,19 +21,19 @@ importers:
   packages/manifest:
     dependencies:
       '@osnova/types':
-        specifier: workspace:*
+        specifier: workspace:0.2.0
         version: link:../types
 
   packages/project:
     dependencies:
       '@osnova/manifest':
-        specifier: workspace:*
+        specifier: workspace:0.2.0
         version: link:../manifest
       '@osnova/types':
-        specifier: workspace:*
+        specifier: workspace:0.2.0
         version: link:../types
       '@osnova/validation':
-        specifier: workspace:*
+        specifier: workspace:0.2.0
         version: link:../validation
 
   packages/types: {}
@@ -41,7 +41,7 @@ importers:
   packages/validation:
     dependencies:
       '@osnova/types':
-        specifier: workspace:*
+        specifier: workspace:0.2.0
         version: link:../types
 
 packages:

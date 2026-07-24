@@ -1,18 +1,22 @@
 {
   "name": "@osnova/project",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
-  "types": "./src/index.ts",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
   "scripts": {
-    "build": "tsc --noEmit -p tsconfig.json"
+    "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@osnova/manifest": "workspace:*",
-    "@osnova/types": "workspace:*",
-    "@osnova/validation": "workspace:*"
+    "@osnova/manifest": "workspace:0.2.0",
+    "@osnova/types": "workspace:0.2.0",
+    "@osnova/validation": "workspace:0.2.0"
   }
 }

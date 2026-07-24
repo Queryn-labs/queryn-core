@@ -3,6 +3,7 @@ import path from "node:path";
 import type { OsnovaManifest, ValidationIssue, ValidationResult } from "@osnova/types";
 
 const supportedKinds = new Set(["general", "subject", "exam"]);
+const supportedVersions = new Set(["0.1", "0.2"]);
 
 export function validateManifest(value: unknown): ValidationResult {
   const issues: ValidationIssue[] = [];
@@ -11,8 +12,8 @@ export function validateManifest(value: unknown): ValidationResult {
     return { valid: false, issues: [{ path: "$", message: "Manifest must be an object." }] };
   }
 
-  if (value.formatVersion !== "0.1") {
-    issues.push({ path: "formatVersion", message: "formatVersion must be 0.1." });
+  if (typeof value.formatVersion !== "string" || !supportedVersions.has(value.formatVersion)) {
+    issues.push({ path: "formatVersion", message: "formatVersion must be 0.1 or 0.2." });
   }
 
   requireString(value, "id", issues);
@@ -31,11 +32,27 @@ export function validateManifest(value: unknown): ValidationResult {
     issues.push({ path: "tags", message: "tags must contain non-empty strings." });
   }
 
+  if ("extensions" in value && !Array.isArray(value.extensions)) {
+    issues.push({ path: "extensions", message: "extensions must be an array." });
+  }
+
+  if (Array.isArray(value.extensions)) {
+    value.extensions.forEach((extension, index) => {
+      if (!isRecord(extension) || typeof extension.id !== "string" || typeof extension.version !== "string") {
+        issues.push({ path: `extensions[${index}]`, message: "extension requires string id and version." });
+      } else if (!/^(?:\*|latest|[~^]?\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?)$/.test(extension.version)) {
+        issues.push({ path: `extensions[${index}].version`, message: "extension version must be exact SemVer, ^range, ~range, *, or latest." });
+      }
+    });
+  }
+
   return { valid: issues.length === 0, issues };
 }
 
-export async function validateProjectStructure(projectPath: string): Promise<ValidationResult> {
-  const requiredPaths = ["osnova.json", "notes", "assets", ".osnova"];
+export async function validateProjectStructure(projectPath: string, formatVersion: "0.1" | "0.2" = "0.1"): Promise<ValidationResult> {
+  const requiredPaths = formatVersion === "0.2"
+    ? ["osnova.json", "notes", "assets", "artifacts", "sessions", "relations", ".osnova"]
+    : ["osnova.json", "notes", "assets", ".osnova"];
   const issues: ValidationIssue[] = [];
 
   await Promise.all(

@@ -1,11 +1,11 @@
 import { copyFile, mkdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
 import type { AssetSummary, ImportAssetInput, MoveAssetInput, OsnovaProject } from "@osnova/types";
-import { normalizeScopeRelativePath, resolveProjectPath, resolveProjectRelativePath, resolveScopedPath, sanitizePathSegment, toProjectRelativePath } from "./path";
-import { createUniqueFilePath, listFiles } from "./io";
-import { detectMediaType } from "./media";
-import { compareUpdatedDesc } from "./utils";
-import { isReservedProjectPath } from "./project-files";
+import { normalizeScopeRelativePath, resolveProjectPath, resolveProjectRelativePath, resolveScopedPath, sanitizePathSegment, toProjectRelativePath } from "./path.js";
+import { createUniqueFilePath, listFiles } from "./io.js";
+import { detectMediaType } from "./media.js";
+import { compareUpdatedDesc } from "./utils.js";
+import { isReservedProjectPath } from "./project-files.js";
 
 export async function listAssets(rootPath: string): Promise<AssetSummary[]> {
   const assetsPath = path.join(rootPath, "assets");

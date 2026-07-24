@@ -1,5 +1,5 @@
-import { RESERVED_PROJECT_ENTRIES } from "./constants";
-import { toProjectRelativePath } from "./path";
+import { RESERVED_PROJECT_ENTRIES } from "./constants.js";
+import { toProjectRelativePath } from "./path.js";
 
 export function isReservedProjectPath(rootPath: string, filePath: string): boolean {
   const relativePath = toProjectRelativePath(rootPath, filePath);

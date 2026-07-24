@@ -1,7 +1,7 @@
 import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
-import { isNodeError } from "./errors";
-import { isHiddenEntryName } from "./project-files";
+import { isNodeError } from "./errors.js";
+import { isHiddenEntryName } from "./project-files.js";
 
 export async function listFiles(
   rootPath: string,

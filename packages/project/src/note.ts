@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { MoveNoteInput, NoteContent, NoteSummary, OsnovaProject, UpdateNoteDocumentInput } from "@osnova/types";
-import { slugify } from "./slug";
+import { slugify } from "./slug.js";
 import {
   normalizeScopeRelativePath,
   resolveProjectPath,
@@ -9,11 +9,11 @@ import {
   resolveScopedPath,
   sanitizePathSegment,
   toProjectRelativePath
-} from "./path";
-import { createUniqueFilePath, listFiles } from "./io";
-import { compareUpdatedDesc } from "./utils";
-import { parseNoteMetadata, splitFrontmatter, unquoteYamlScalar, updateFrontmatterFields, updateFrontmatterTimestamp } from "./frontmatter";
-import { isReservedProjectPath } from "./project-files";
+} from "./path.js";
+import { createUniqueFilePath, listFiles } from "./io.js";
+import { compareUpdatedDesc } from "./utils.js";
+import { parseNoteMetadata, splitFrontmatter, unquoteYamlScalar, updateFrontmatterFields, updateFrontmatterTimestamp } from "./frontmatter.js";
+import { isReservedProjectPath } from "./project-files.js";
 
 export interface CreateNoteInput {
   title: string;

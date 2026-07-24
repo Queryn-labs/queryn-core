@@ -1,12 +1,12 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createManifest, readManifest, serializeManifest, type CreateManifestInput } from "@osnova/manifest";
 import type { OsnovaProject, ProjectOverview, ValidationIssue } from "@osnova/types";
 import { assertValidManifest, validateManifest, validateProjectStructure } from "@osnova/validation";
-import { getErrorMessage } from "./errors";
-import { listNotes } from "./note";
-import { listAssets } from "./asset";
-import { ASSETS_DIR, MANIFEST_FILE, NOTES_DIR, OSNOVA_DIR } from "./constants";
+import { getErrorMessage } from "./errors.js";
+import { listNotes } from "./note.js";
+import { listAssets } from "./asset.js";
+import { MANIFEST_FILE, OSNOVA_DIR, REBORN_PROJECT_DIRS } from "./constants.js";
 
 export interface CreateProjectInput extends CreateManifestInput {
   rootPath: string;
@@ -15,12 +15,25 @@ export interface CreateProjectInput extends CreateManifestInput {
 export async function createProject(input: CreateProjectInput): Promise<OsnovaProject> {
   const manifest = createManifest(input);
 
+  try {
+    await access(path.join(input.rootPath, MANIFEST_FILE));
+    throw new Error("Project manifest already exists.");
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+  }
+
+  try {
+    const entries = await readdir(input.rootPath);
+    if (entries.length) throw new Error("Project directory is not empty. Open an existing project or choose an empty directory.");
+  } catch (error) {
+    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) throw error;
+  }
+
   await mkdir(input.rootPath, { recursive: true });
-  await Promise.all([
-    mkdir(path.join(input.rootPath, NOTES_DIR), { recursive: true }),
-    mkdir(path.join(input.rootPath, ASSETS_DIR), { recursive: true }),
-    mkdir(path.join(input.rootPath, OSNOVA_DIR), { recursive: true })
-  ]);
+  const projectDirectories = manifest.formatVersion === "0.2"
+    ? REBORN_PROJECT_DIRS
+    : (["notes", "assets", ".osnova"] as const);
+  await Promise.all(projectDirectories.map((directory) => mkdir(path.join(input.rootPath, directory), { recursive: true })));
 
   await writeFile(path.join(input.rootPath, MANIFEST_FILE), serializeManifest(manifest), "utf8");
 
@@ -31,7 +44,11 @@ export async function openProject(rootPath: string): Promise<OsnovaProject> {
   const manifest = await readManifest(rootPath);
   assertValidManifest(manifest);
 
-  const structure = await validateProjectStructure(rootPath);
+  // A manifest proves this is an Osnova project; its derived state is safe to
+  // recreate and must never be required for portability.
+  await mkdir(path.join(rootPath, OSNOVA_DIR), { recursive: true });
+
+  const structure = await validateProjectStructure(rootPath, manifest.formatVersion);
   if (!structure.valid) {
     throw new Error(structure.issues.map((issue) => `${issue.path}: ${issue.message}`).join("\n"));
   }
@@ -55,7 +72,7 @@ export async function getProjectOverview(rootPath: string): Promise<ProjectOverv
     issues.push({ path: MANIFEST_FILE, message: getErrorMessage(error) });
   }
 
-  const structureValidation = await validateProjectStructure(rootPath);
+  const structureValidation = await validateProjectStructure(rootPath, manifest?.formatVersion ?? "0.1");
   issues.push(...structureValidation.issues);
 
   const [notes, assets] = await Promise.all([listNotes(rootPath), listAssets(rootPath)]);

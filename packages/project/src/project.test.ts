@@ -1,11 +1,13 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   createNote,
+  createArtifactRelation,
   createProject,
   createProjectFolder,
+  createSession,
   getProjectOverview,
   importAsset,
   listAssets,
@@ -14,10 +16,20 @@ import {
   listProjectTree,
   moveProjectFolder,
   openProject,
+  appendSessionEvent,
+  inspectProjectMigration,
+  listArtifacts,
+  listArtifactRelations,
+  listSessions,
+  migrateProject,
+  publishArtifact,
   readNote,
+  readSessionEvents,
+  registerExistingArtifact,
   updateNote,
-  updateNoteDocument
-} from "./index";
+  updateNoteDocument,
+  verifyArtifact
+} from "./index.js";
 
 const createdRoots: string[] = [];
 
@@ -35,6 +47,223 @@ describe("project operations", () => {
 
     expect(project.manifest.id).toBe("test-project");
     expect(project.manifest.name).toBe("Test Project");
+    expect(project.manifest.formatVersion).toBe("0.2");
+    await expect(readFile(path.join(rootPath, "artifacts", "missing.json"), "utf8")).rejects.toThrow();
+  });
+
+  it("recreates disposable .osnova state when opening a known project", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    await createProject({ rootPath, id: "test-project", name: "Test Project" });
+    await rm(path.join(rootPath, ".osnova"), { recursive: true, force: true });
+
+    const project = await openProject(rootPath);
+    expect(project.manifest.id).toBe("test-project");
+    expect((await stat(path.join(rootPath, ".osnova"))).isDirectory()).toBe(true);
+  });
+
+  it("does not silently initialize a non-empty folder as a project", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    await writeFile(path.join(rootPath, "unrelated.txt"), "keep me", "utf8");
+
+    await expect(createProject({ rootPath, id: "test-project", name: "Test Project" })).rejects.toThrow("not empty");
+    expect(await readFile(path.join(rootPath, "unrelated.txt"), "utf8")).toBe("keep me");
+    await expect(readFile(path.join(rootPath, "osnova.json"), "utf8")).rejects.toThrow();
+  });
+
+  it("registers an existing project file as an artifact", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
+    await writeFile(path.join(rootPath, "notes", "source.md"), "# Source\n", "utf8");
+
+    const artifact = await registerExistingArtifact(project, {
+      id: "source-note",
+      type: "osnova.note",
+      title: "Source",
+      projectRelativePath: "notes/source.md",
+      context: { mode: "automatic" }
+    });
+
+    expect(artifact.payloads[0].path).toBe("notes/source.md");
+    expect(artifact.payloads[0].mediaType).toBe("text/markdown");
+    expect(artifact.payloads[0].sha256).toHaveLength(64);
+    expect((await listArtifacts(rootPath)).map((item) => item.id)).toEqual(["source-note"]);
+    expect(await verifyArtifact(rootPath, "source-note")).toEqual({ valid: true, issues: [] });
+    await expect(registerExistingArtifact(project, {
+      type: "osnova.invalid-context", projectRelativePath: "notes/source.md", context: { mode: "custom" } as never
+    })).rejects.toThrow("namespaced provider id");
+  });
+
+  it("publishes outbox payloads under an atomic artifact directory", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "osnova-outbox-"));
+    createdRoots.push(rootPath, outboxPath);
+    const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
+    const wav = Buffer.alloc(44);
+    wav.write("RIFF", 0, "ascii");
+    wav.writeUInt32LE(36, 4);
+    wav.write("WAVEfmt ", 8, "ascii");
+    wav.writeUInt32LE(16, 16);
+    wav.writeUInt16LE(1, 20);
+    wav.writeUInt16LE(1, 22);
+    wav.writeUInt32LE(8_000, 24);
+    wav.writeUInt32LE(16_000, 28);
+    wav.writeUInt16LE(2, 32);
+    wav.writeUInt16LE(16, 34);
+    wav.write("data", 36, "ascii");
+    await writeFile(path.join(outboxPath, "voice.wav"), wav);
+
+    const artifact = await publishArtifact(project, {
+      id: "voice-1",
+      type: "osnova.audio",
+      title: "Voice",
+      outboxPath,
+      payloads: [{ path: "voice.wav", mediaType: "audio/wav", role: "primary" }],
+      provenance: {
+        source: "operation",
+        toolId: "osnova.example.tts",
+        operationId: "osnova.example.tts.synthesize",
+        runId: "run-1"
+      },
+      context: { mode: "none" }
+    });
+
+    expect(artifact.payloads[0].path).toBe("artifacts/data/voice-1/voice.wav");
+    const published = await readFile(path.join(rootPath, artifact.payloads[0].path));
+    expect(published.subarray(0, 4).toString("ascii")).toBe("RIFF");
+  });
+
+  it("rejects a false declared MIME and rolls back final artifact data", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "osnova-outbox-"));
+    createdRoots.push(rootPath, outboxPath);
+    const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
+    await writeFile(path.join(outboxPath, "fake.wav"), "this is not audio", "utf8");
+    await expect(publishArtifact(project, {
+      id: "fake-audio", type: "osnova.audio", outboxPath,
+      payloads: [{ path: "fake.wav", mediaType: "audio/wav" }], provenance: { source: "operation" }
+    })).rejects.toThrow("MIME mismatch");
+    await expect(readFile(path.join(rootPath, "artifacts", "data", "fake-audio", "fake.wav"))).rejects.toThrow();
+  });
+
+  it("rejects an oversized payload before copying it into the project", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "osnova-outbox-"));
+    createdRoots.push(rootPath, outboxPath);
+    const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
+    await writeFile(path.join(outboxPath, "large.txt"), "12345", "utf8");
+    await expect(publishArtifact(project, {
+      id: "too-large", type: "osnova.text", outboxPath,
+      payloads: [{ path: "large.txt", mediaType: "text/plain" }],
+      provenance: { source: "operation" }, maxPayloadBytes: 4
+    })).rejects.toThrow("exceeds 4 bytes");
+    await expect(readFile(path.join(rootPath, "artifacts", "data", "too-large", "large.txt"))).rejects.toThrow();
+  });
+
+  it("rejects traversal and symlink payloads from an outbox", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "osnova-outbox-"));
+    createdRoots.push(rootPath, outboxPath);
+    const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
+
+    await expect(
+      publishArtifact(project, {
+        id: "bad",
+        type: "osnova.file",
+        outboxPath,
+        payloads: [{ path: "../outside.txt" }],
+        provenance: { source: "operation" }
+      })
+    ).rejects.toThrow("Path traversal");
+
+    if (process.platform !== "win32") {
+      const outsidePath = await mkdtemp(path.join(os.tmpdir(), "osnova-outside-"));
+      createdRoots.push(outsidePath);
+      await writeFile(path.join(outsidePath, "secret.txt"), "secret", "utf8");
+      await symlink(outsidePath, path.join(outboxPath, "linked"), "dir");
+      await expect(
+        publishArtifact(project, {
+          id: "symlink-parent",
+          type: "osnova.file",
+          outboxPath,
+          payloads: [{ path: "linked/secret.txt" }],
+          provenance: { source: "operation" }
+        })
+      ).rejects.toThrow("symlink");
+    }
+  });
+
+  it("persists portable session events with stable sequence numbers", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
+    const session = await createSession(project, { id: "research", title: "Research", goal: "Find evidence" });
+    await appendSessionEvent(rootPath, session.id, { type: "user-message", data: { text: "Start" } });
+    await appendSessionEvent(rootPath, session.id, { type: "plan", data: { steps: [] } });
+    await expect(appendSessionEvent(rootPath, session.id, { type: "unknown" as never, data: {} })).rejects.toThrow("Invalid session event type");
+
+    const events = await readSessionEvents(rootPath, session.id);
+    expect(events.map((event) => event.sequence)).toEqual([0, 1]);
+    expect((await listSessions(rootPath))[0].goal).toBe("Find evidence");
+  });
+
+  it("serializes concurrent events inside one session", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
+    const session = await createSession(project, { id: "parallel", title: "Parallel work" });
+    await Promise.all(Array.from({ length: 20 }, (_, index) => appendSessionEvent(rootPath, session.id, {
+      type: "operation-result", data: { index }
+    })));
+
+    const events = await readSessionEvents(rootPath, session.id);
+    expect(events.map((event) => event.sequence)).toEqual(Array.from({ length: 20 }, (_, index) => index));
+    expect(new Set(events.map((event) => event.id)).size).toBe(20);
+  });
+
+  it("recovers an interrupted trailing session event before the next append", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    const project = await createProject({ rootPath, id: "session-recovery", name: "Session recovery", formatVersion: "0.2" });
+    const session = await createSession(project, { id: "recovery", title: "Recovery" });
+    await appendSessionEvent(rootPath, session.id, { type: "user-message", data: { text: "Complete" } });
+    await appendFile(path.join(rootPath, "sessions", session.id, "events.jsonl"), '{"schemaVersion":"1","id":"interrupted"');
+    expect(await readSessionEvents(rootPath, session.id)).toHaveLength(1);
+    await appendSessionEvent(rootPath, session.id, { type: "status", data: { recovered: true } });
+    const events = await readSessionEvents(rootPath, session.id);
+    expect(events.map((event) => event.sequence)).toEqual([0, 1]);
+    expect(events.map((event) => event.type)).toEqual(["user-message", "status"]);
+  });
+
+  it("links arbitrary artifact types through namespaced relations", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
+    await writeFile(path.join(rootPath, "notes", "one.md"), "one", "utf8");
+    await writeFile(path.join(rootPath, "notes", "two.md"), "two", "utf8");
+    const one = await registerExistingArtifact(project, { id: "one", type: "custom.one", projectRelativePath: "notes/one.md" });
+    const two = await registerExistingArtifact(project, { id: "two", type: "custom.two", projectRelativePath: "notes/two.md" });
+    const relation = await createArtifactRelation(rootPath, { from: { artifactId: one.id }, to: { artifactId: two.id }, type: "study.explains" });
+    expect((await listArtifactRelations(rootPath, one.id)).map((item) => item.id)).toEqual([relation.id]);
+  });
+
+  it("dry-runs and applies an explicit 0.1 to 0.2 migration", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    await createProject({ rootPath, id: "legacy", name: "Legacy", formatVersion: "0.1" });
+
+    const plan = await inspectProjectMigration(rootPath);
+    const dryRun = await migrateProject(rootPath, { dryRun: true });
+    expect(plan.required).toBe(true);
+    expect(dryRun.manifest.formatVersion).toBe("0.2");
+    await expect(readFile(path.join(rootPath, "artifacts", "anything"), "utf8")).rejects.toThrow();
+
+    const migrated = await migrateProject(rootPath);
+    expect(migrated.backupPath).toContain("0.1-to-0.2");
+    expect((await openProject(rootPath)).manifest.formatVersion).toBe("0.2");
+    expect((await inspectProjectMigration(rootPath)).required).toBe(false);
   });
 
   it("creates a markdown note in notes", async () => {

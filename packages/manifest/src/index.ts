@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { OsnovaManifest, ProjectKind } from "@osnova/types";
+import type { ExtensionRequirement, OsnovaManifest, ProjectFormatVersion, ProjectKind } from "@osnova/types";
 
 export interface CreateManifestInput {
   id: string;
@@ -9,11 +9,13 @@ export interface CreateManifestInput {
   kind?: ProjectKind;
   locale?: string;
   tags?: string[];
+  formatVersion?: ProjectFormatVersion;
+  extensions?: ExtensionRequirement[];
 }
 
 export function createManifest(input: CreateManifestInput, now = new Date()): OsnovaManifest {
   return {
-    formatVersion: "0.1",
+    formatVersion: input.formatVersion ?? "0.2",
     id: input.id,
     name: input.name,
     description: input.description,
@@ -21,7 +23,8 @@ export function createManifest(input: CreateManifestInput, now = new Date()): Os
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     locale: input.locale,
-    tags: input.tags
+    tags: input.tags,
+    extensions: input.extensions
   };
 }
 

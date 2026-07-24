@@ -1,9 +1,9 @@
 import { readFile } from "node:fs/promises";
 import type { AssetSummary, NoteSummary, ProjectLink } from "@osnova/types";
-import { listNotes } from "./note";
-import { listAssets } from "./asset";
-import { normalizeProjectRelativePath } from "./path";
-import { slugify } from "./slug";
+import { listNotes } from "./note.js";
+import { listAssets } from "./asset.js";
+import { normalizeProjectRelativePath } from "./path.js";
+import { slugify } from "./slug.js";
 
 export async function listProjectLinks(rootPath: string): Promise<ProjectLink[]> {
   const [notes, assets] = await Promise.all([listNotes(rootPath), listAssets(rootPath)]);

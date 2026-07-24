@@ -17,11 +17,11 @@ import {
   resolveScopedPath,
   sanitizePathSegment,
   toProjectPath
-} from "./path";
-import { isNodeError } from "./errors";
-import { listNotes } from "./note";
-import { listAssets } from "./asset";
-import { isHiddenEntryName, isReservedProjectPath } from "./project-files";
+} from "./path.js";
+import { isNodeError } from "./errors.js";
+import { listNotes } from "./note.js";
+import { listAssets } from "./asset.js";
+import { isHiddenEntryName, isReservedProjectPath } from "./project-files.js";
 
 export async function createProjectFolder(project: OsnovaProject, input: CreateProjectFolderInput): Promise<ProjectTreeNode> {
   const parentRelativePath = input.parentRelativePath ? normalizeScopeRelativePath(input.parentRelativePath) : "";

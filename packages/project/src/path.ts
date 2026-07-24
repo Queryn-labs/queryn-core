@@ -1,6 +1,6 @@
 import path from "node:path";
 import type { ProjectTreeScope } from "@osnova/types";
-import { ASSETS_DIR, NOTES_DIR } from "./constants";
+import { ASSETS_DIR, NOTES_DIR } from "./constants.js";
 
 export function sanitizePathSegment(value: string): string {
   const segment = value.trim().replace(/[\\/]+/g, "-");

@@ -1,12 +1,13 @@
 {
   "name": "osnova-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "license": "MIT",
   "packageManager": "pnpm@10.5.2",
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "npm run clean && tsc -p packages/types/tsconfig.json && tsc -p packages/manifest/tsconfig.json && tsc -p packages/validation/tsconfig.json && tsc -p packages/project/tsconfig.json",
+    "clean": "node -e \"for (const p of ['types','manifest','validation','project']) require('node:fs').rmSync('packages/'+p+'/dist',{recursive:true,force:true})\"",
     "test": "vitest run",
     "lint": "tsc --noEmit -p tsconfig.json"
   },
