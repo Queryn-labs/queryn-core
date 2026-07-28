@@ -13,7 +13,7 @@ import { ARTIFACTS_DIR, OSNOVA_DIR } from "./constants.js";
 import { detectMediaType } from "./media.js";
 import { normalizeProjectRelativePath, resolveProjectPath, toProjectRelativePath } from "./path.js";
 import { writeFileAtomic } from "./atomic.js";
-import { slugify } from "./slug.js";
+import { slugifyIdentifier } from "./slug.js";
 
 const defaultMaxPayloadBytes = 256 * 1024 * 1024;
 
@@ -290,7 +290,7 @@ function normalizeArtifactId(value: string): string {
 }
 
 function createArtifactId(value: string): string {
-  return `${slugify(value) || "artifact"}-${randomUUID()}`;
+  return `${slugifyIdentifier(value) || "artifact"}-${randomUUID()}`;
 }
 
 function assertNamespacedId(value: string, label: string): void {

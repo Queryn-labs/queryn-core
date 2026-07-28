@@ -420,7 +420,10 @@ export interface RuntimeState {
 export type ContextLevel = "compact" | "expanded";
 
 export interface ContextSource {
-  artifactId: string;
+  artifactId?: string;
+  projectRelativePath?: string;
+  title?: string;
+  kind?: "artifact" | "note" | "asset";
   payloadPath?: string;
   providerId?: string;
 }

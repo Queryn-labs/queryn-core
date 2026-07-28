@@ -209,6 +209,25 @@ describe("project operations", () => {
     expect((await listSessions(rootPath))[0].goal).toBe("Find evidence");
   });
 
+  it("generates portable ids for sessions and artifacts with non-Latin titles", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    const project = await createProject({ rootPath, id: "localized-project", name: "Localized Project" });
+    await rm(path.join(rootPath, "sessions"), { recursive: true, force: true });
+    const session = await createSession(project, { title: "Разобрать архитектуру трансформера" });
+    const note = await createNote(project, { title: "Архитектура трансформера", body: "Контекст" });
+    const artifact = await registerExistingArtifact(project, {
+      type: "osnova.note",
+      title: note.title,
+      projectRelativePath: note.relativePath
+    });
+
+    expect(session.id).toMatch(/^session-[a-f0-9-]{36}$/);
+    expect((await stat(path.join(rootPath, "sessions", session.id))).isDirectory()).toBe(true);
+    expect(artifact.id).toMatch(/^artifact-[a-f0-9-]{36}$/);
+    expect((await listSessions(rootPath))[0].title).toBe("Разобрать архитектуру трансформера");
+  });
+
   it("serializes concurrent events inside one session", async () => {
     const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
     createdRoots.push(rootPath);

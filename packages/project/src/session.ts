@@ -10,7 +10,7 @@ import type {
   SessionStatus
 } from "@osnova/types";
 import { SESSIONS_DIR } from "./constants.js";
-import { slugify } from "./slug.js";
+import { slugifyIdentifier } from "./slug.js";
 import { writeFileAtomic } from "./atomic.js";
 
 const sessionEventQueues = new Map<string, Promise<void>>();
@@ -20,7 +20,8 @@ export async function createSession(
   input: CreateSessionInput,
   now = new Date()
 ): Promise<SessionDescriptor> {
-  const id = normalizeSessionId(input.id ?? `${slugify(input.title) || "session"}-${randomUUID()}`);
+  const id = normalizeSessionId(input.id ?? `${slugifyIdentifier(input.title) || "session"}-${randomUUID()}`);
+  await mkdir(path.join(project.rootPath, SESSIONS_DIR), { recursive: true });
   const directory = sessionDirectory(project.rootPath, id);
   await mkdir(directory, { recursive: false });
 
