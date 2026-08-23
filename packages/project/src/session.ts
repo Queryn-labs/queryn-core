@@ -124,7 +124,7 @@ function normalizeSessionId(value: string): string {
 }
 
 function assertSessionEventType(value: string): void {
-  if (!["user-message", "assistant-message", "plan", "operation-call", "operation-result", "approval", "artifact-linked", "status"].includes(value)) {
+  if (!["user-message", "assistant-message", "plan", "operation-call", "operation-result", "approval", "artifact-linked", "status", "tool-call", "observation"].includes(value)) {
     throw new Error(`Invalid session event type: ${value}`);
   }
 }

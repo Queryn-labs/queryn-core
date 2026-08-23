@@ -280,7 +280,9 @@ export type SessionEventType =
   | "operation-result"
   | "approval"
   | "artifact-linked"
-  | "status";
+  | "status"
+  | "tool-call"
+  | "observation";
 
 export interface SessionEvent {
   schemaVersion: "1";
