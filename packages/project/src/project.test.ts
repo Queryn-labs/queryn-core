@@ -18,18 +18,23 @@ import {
   openProject,
   appendSessionEvent,
   inspectProjectMigration,
-  listArtifacts,
+  inspectProjectAdoption,
+  adoptProject,
+  updateSession,
   listArtifactRelations,
+  listArtifacts,
+  publishArtifact,
   listSessions,
   migrateProject,
-  publishArtifact,
   readNote,
+  readSession,
   readSessionEvents,
   registerExistingArtifact,
   updateNote,
   updateNoteDocument,
   verifyArtifact
 } from "./index.js";
+import { slugifyIdentifier } from "./slug.js";
 
 const createdRoots: string[] = [];
 
@@ -597,5 +602,67 @@ describe("project operations", () => {
 
     expect(overview.validation.valid).toBe(false);
     expect(overview.validation.issues.map((issue) => issue.path).sort()).toEqual([".osnova", "assets", "notes"]);
+  });
+});
+
+describe("project adoption", () => {
+  it("adopts a foreign directory without touching existing files", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-adoption-"));
+    createdRoots.push(rootPath);
+    await writeFile(path.join(rootPath, "thesis.md"), "# Thesis", "utf8");
+
+    const plan = await inspectProjectAdoption(rootPath);
+    expect(plan.manifestExists).toBe(false);
+    expect(plan.directoryName).toBe(path.basename(rootPath));
+    expect(plan.suggestedId).toBe(slugifyIdentifier(path.basename(rootPath)));
+    expect(plan.missingDirectories).toEqual(expect.arrayContaining(["notes", "assets", "artifacts", "sessions", "relations"]));
+    expect(plan.collisions).toEqual([]);
+
+    const dryRun = await adoptProject(rootPath, { name: "Adopted" }, { dryRun: true });
+    expect(dryRun.dryRun).toBe(true);
+    await expect(readFile(path.join(rootPath, "osnova.json"), "utf8")).rejects.toThrow();
+
+    const result = await adoptProject(rootPath, { name: "Adopted" });
+    expect(result.dryRun).toBe(false);
+    expect(result.manifest?.name).toBe("Adopted");
+
+    const untouched = await readFile(path.join(rootPath, "thesis.md"), "utf8");
+    expect(untouched).toBe("# Thesis");
+
+    const project = await openProject(rootPath);
+    expect(project.manifest.name).toBe("Adopted");
+  });
+
+  it("reports collisions for occupied reserved directories and refuses existing manifests", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-adoption-"));
+    createdRoots.push(rootPath);
+    await mkdir(path.join(rootPath, "assets"), { recursive: true });
+    await writeFile(path.join(rootPath, "assets", "logo.png"), "image", "utf8");
+
+    const plan = await inspectProjectAdoption(rootPath);
+    expect(plan.collisions).toEqual([{ path: "assets", entryCount: 1 }]);
+    expect(plan.missingDirectories).not.toContain("assets");
+
+    await adoptProject(rootPath, {});
+    await expect(adoptProject(rootPath, {})).rejects.toThrow("Project manifest already exists. Use project.open.");
+  });
+});
+
+describe("session updates", () => {
+  it("updates memoryMode and updatedAt on an existing session", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-session-"));
+    createdRoots.push(rootPath);
+    const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
+    const session = await createSession(project, { title: "Memory check" });
+
+    const updated = await updateSession(rootPath, session.id, { memoryMode: "full" });
+    expect(updated.memoryMode).toBe("full");
+    expect(updated.updatedAt !== undefined && updated.updatedAt >= session.createdAt).toBe(true);
+
+    const reread = await readSession(rootPath, session.id);
+    expect(reread.memoryMode).toBe("full");
+
+    const reverted = await updateSession(rootPath, session.id, { memoryMode: "off" });
+    expect(reverted.memoryMode).toBe("off");
   });
 });

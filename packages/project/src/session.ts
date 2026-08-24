@@ -33,7 +33,8 @@ export async function createSession(
     status: "active",
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
-    context: input.context
+    context: input.context,
+    memoryMode: input.memoryMode
   };
   await writeSession(project.rootPath, session);
   await writeFileAtomic(path.join(directory, "events.jsonl"), "");
@@ -43,6 +44,21 @@ export async function createSession(
 export async function readSession(rootPath: string, sessionId: string): Promise<SessionDescriptor> {
   const raw = await readFile(path.join(sessionDirectory(rootPath, sessionId), "session.json"), "utf8");
   return JSON.parse(raw) as SessionDescriptor;
+}
+
+export async function updateSession(
+  rootPath: string,
+  sessionId: string,
+  patch: { title?: string; goal?: string; memoryMode?: "full" | "off" },
+  now = new Date()
+): Promise<SessionDescriptor> {
+  const session = await readSession(rootPath, sessionId);
+  if (patch.title !== undefined) session.title = patch.title;
+  if (patch.goal !== undefined) session.goal = patch.goal;
+  if (patch.memoryMode !== undefined) session.memoryMode = patch.memoryMode;
+  session.updatedAt = now.toISOString();
+  await writeSession(rootPath, session);
+  return session;
 }
 
 export async function listSessions(rootPath: string): Promise<SessionDescriptor[]> {

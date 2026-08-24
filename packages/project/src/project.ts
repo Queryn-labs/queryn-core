@@ -46,7 +46,10 @@ export async function openProject(rootPath: string): Promise<OsnovaProject> {
 
   // A manifest proves this is an Osnova project; its derived state is safe to
   // recreate and must never be required for portability.
-  await mkdir(path.join(rootPath, OSNOVA_DIR), { recursive: true });
+  const projectDirectories = manifest.formatVersion === "0.2"
+    ? REBORN_PROJECT_DIRS
+    : (["notes", "assets", ".osnova"] as const);
+  await Promise.all(projectDirectories.map((directory) => mkdir(path.join(rootPath, directory), { recursive: true })));
 
   const structure = await validateProjectStructure(rootPath, manifest.formatVersion);
   if (!structure.valid) {

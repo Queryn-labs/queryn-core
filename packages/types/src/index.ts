@@ -270,6 +270,7 @@ export interface SessionDescriptor {
   createdAt: string;
   updatedAt?: string;
   context?: ArtifactRef[];
+  memoryMode?: "full" | "off";
 }
 
 export type SessionEventType =
@@ -299,6 +300,7 @@ export interface CreateSessionInput {
   title: string;
   goal?: string;
   context?: ArtifactRef[];
+  memoryMode?: "full" | "off";
 }
 
 export interface AppendSessionEventInput {
@@ -485,6 +487,27 @@ export interface ProjectMigrationResult {
   plan: ProjectMigrationPlan;
   backupPath?: string;
   manifest: OsnovaManifest;
+}
+
+export interface ProjectAdoptionCollision {
+  path: string;
+  entryCount: number;
+}
+
+export interface ProjectAdoptionPlan {
+  rootPath: string;
+  directoryName: string;
+  manifestExists: boolean;
+  missingDirectories: string[];
+  collisions: ProjectAdoptionCollision[];
+  suggestedId: string;
+  suggestedName: string;
+}
+
+export interface ProjectAdoptionResult {
+  dryRun: boolean;
+  plan: ProjectAdoptionPlan;
+  manifest?: OsnovaManifest;
 }
 
 export interface ValidationIssue {
