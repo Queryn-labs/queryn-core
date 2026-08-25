@@ -9,7 +9,8 @@
     "build": "npm run clean && tsc -p packages/types/tsconfig.json && tsc -p packages/manifest/tsconfig.json && tsc -p packages/validation/tsconfig.json && tsc -p packages/project/tsconfig.json",
     "clean": "node -e \"for (const p of ['types','manifest','validation','project']) require('node:fs').rmSync('packages/'+p+'/dist',{recursive:true,force:true})\"",
     "test": "vitest run",
-    "lint": "tsc --noEmit -p tsconfig.json"
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "pretest": "node ../osnova-spec/scripts/generate-contracts.mjs --check"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",

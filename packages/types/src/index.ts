@@ -1,38 +1,55 @@
-export type ProjectKind = "general" | "subject" | "exam";
-export type ProjectFormatVersion = "0.1" | "0.2";
+import type {
+  OsnovaManifest,
+  SubjectMetadata,
+  ExamMetadata,
+  ExtensionRequirement,
+  ProjectFormatVersion,
+  ProjectKind
+} from "./generated/osnova.generated.js";
+import type {
+  ArtifactDescriptor,
+  Payload as ArtifactPayload,
+  Provenance as ArtifactProvenance,
+  Context as ArtifactContextPolicy,
+  ArtifactContextMode,
+  ArtifactRef
+} from "./generated/artifact.generated.js";
+import type { ArtifactRelation } from "./generated/artifact-relation.generated.js";
+import type { SessionDescriptor, SessionStatus, MemoryMode } from "./generated/session.generated.js";
+import type { SessionEvent, SessionEventType } from "./generated/session-event.generated.js";
+import type { ContextEnvelope, ContextLevel, ContextSource } from "./generated/context-envelope.generated.js";
+import type { AgentPlan, Step as AgentStep } from "./generated/agent-plan.generated.js";
+import type { JobDescriptor, JobStatus } from "./generated/job.generated.js";
 
-export interface ExtensionRequirement {
-  id: string;
-  version: string;
-  enabled?: boolean;
-}
+export type {
+  OsnovaManifest,
+  SubjectMetadata,
+  ExamMetadata,
+  ExtensionRequirement,
+  ProjectFormatVersion,
+  ProjectKind,
+  ArtifactDescriptor,
+  ArtifactPayload,
+  ArtifactProvenance,
+  ArtifactContextPolicy,
+  ArtifactContextMode,
+  ArtifactRef,
+  ArtifactRelation,
+  SessionDescriptor,
+  SessionStatus,
+  MemoryMode,
+  SessionEvent,
+  SessionEventType,
+  ContextEnvelope,
+  ContextLevel,
+  ContextSource,
+  AgentPlan,
+  AgentStep,
+  JobDescriptor,
+  JobStatus
+};
 
-export interface SubjectMetadata {
-  name?: string;
-  grade?: string;
-  institution?: string;
-}
 
-export interface ExamMetadata {
-  name?: string;
-  date?: string;
-  targetScore?: number;
-}
-
-export interface OsnovaManifest {
-  formatVersion: ProjectFormatVersion;
-  id: string;
-  name: string;
-  description?: string;
-  kind?: ProjectKind;
-  createdAt: string;
-  updatedAt?: string;
-  locale?: string;
-  tags?: string[];
-  subject?: SubjectMetadata;
-  exam?: ExamMetadata;
-  extensions?: ExtensionRequirement[];
-}
 
 export interface OsnovaProject {
   rootPath: string;
@@ -173,50 +190,7 @@ export interface Relation {
   createdAt?: string;
 }
 
-export type ArtifactContextMode = "none" | "automatic" | "declarative" | "custom";
 
-export interface ArtifactRef {
-  artifactId: string;
-  payloads?: Array<{ path: string; sha256: string }>;
-}
-
-export interface ArtifactPayload {
-  path: string;
-  mediaType: string;
-  role?: string;
-  size: number;
-  sha256: string;
-}
-
-export interface ArtifactProvenance {
-  source: "manual" | "import" | "operation";
-  toolId?: string;
-  operationId?: string;
-  runId?: string;
-  model?: string;
-  inputs?: ArtifactRef[];
-}
-
-export interface ArtifactContextPolicy {
-  mode: ArtifactContextMode;
-  providerId?: string;
-  fields?: string[];
-  template?: string;
-}
-
-export interface ArtifactDescriptor {
-  schemaVersion: "1";
-  id: string;
-  type: string;
-  title?: string;
-  createdAt: string;
-  updatedAt?: string;
-  payloads: ArtifactPayload[];
-  provenance: ArtifactProvenance;
-  context?: ArtifactContextPolicy;
-  tags?: string[];
-  metadata?: Record<string, unknown>;
-}
 
 export interface PublishArtifactPayloadInput {
   path: string;
@@ -249,51 +223,7 @@ export interface RegisterArtifactInput {
   metadata?: Record<string, unknown>;
 }
 
-export interface ArtifactRelation {
-  schemaVersion: "1";
-  id: string;
-  from: ArtifactRef;
-  to: ArtifactRef;
-  type: string;
-  createdAt?: string;
-  metadata?: Record<string, unknown>;
-}
 
-export type SessionStatus = "active" | "completed" | "archived";
-
-export interface SessionDescriptor {
-  schemaVersion: "1";
-  id: string;
-  title: string;
-  goal?: string;
-  status: SessionStatus;
-  createdAt: string;
-  updatedAt?: string;
-  context?: ArtifactRef[];
-  memoryMode?: "full" | "off";
-}
-
-export type SessionEventType =
-  | "user-message"
-  | "assistant-message"
-  | "plan"
-  | "operation-call"
-  | "operation-result"
-  | "approval"
-  | "artifact-linked"
-  | "status"
-  | "tool-call"
-  | "observation";
-
-export interface SessionEvent {
-  schemaVersion: "1";
-  id: string;
-  sessionId: string;
-  sequence: number;
-  timestamp: string;
-  type: SessionEventType;
-  data: Record<string, unknown>;
-}
 
 export interface CreateSessionInput {
   id?: string;
@@ -360,30 +290,6 @@ export interface OperationDefinition {
   resources?: OperationResources;
 }
 
-export type JobStatus =
-  | "queued"
-  | "waiting-approval"
-  | "running"
-  | "succeeded"
-  | "failed"
-  | "cancelled"
-  | "interrupted";
-
-export interface JobDescriptor {
-  id: string;
-  projectPath: string;
-  sessionId?: string;
-  operationId: string;
-  status: JobStatus;
-  createdAt: string;
-  updatedAt: string;
-  input: Record<string, unknown>;
-  result?: Record<string, unknown>;
-  artifactIds?: string[];
-  error?: string;
-  progress?: number;
-  statusMessage?: string;
-}
 
 export type RuntimeKind = "builtin" | "node-process" | "native-process" | "oci" | "remote";
 export type RuntimeLifecycle = "job" | "project" | "shared";
@@ -421,50 +327,7 @@ export interface RuntimeState {
   error?: string;
 }
 
-export type ContextLevel = "compact" | "expanded";
 
-export interface ContextSource {
-  artifactId?: string;
-  projectRelativePath?: string;
-  title?: string;
-  kind?: "artifact" | "note" | "asset";
-  payloadPath?: string;
-  providerId?: string;
-}
-
-export interface ContextEnvelope {
-  level: ContextLevel;
-  text?: string;
-  structured?: Record<string, unknown>;
-  sources: ContextSource[];
-  sensitivity: "public" | "project" | "sensitive";
-  allowedRecipients: Array<"local" | "cloud">;
-  tokenEstimate: number;
-  truncated: boolean;
-  freshness?: string;
-  providerVersion: string;
-}
-
-export interface AgentStep {
-  id: string;
-  operationId: string;
-  title: string;
-  arguments: Record<string, unknown>;
-  inputArtifacts?: ArtifactRef[];
-  inputFromSteps?: string[];
-  dependsOn?: string[];
-  approvalRequired: boolean;
-}
-
-export interface AgentPlan {
-  schemaVersion: "1";
-  id: string;
-  goal: string;
-  steps: AgentStep[];
-  createdAt: string;
-  maxSteps: number;
-  maxDurationSeconds?: number;
-}
 
 export interface ApprovalDecision {
   planId: string;
