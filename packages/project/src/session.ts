@@ -46,6 +46,31 @@ export async function readSession(rootPath: string, sessionId: string): Promise<
   return JSON.parse(raw) as SessionDescriptor;
 }
 
+export async function forkSession(
+  project: OsnovaProject,
+  input: { sourceSessionId: string; throughEventId: string; title?: string },
+  now = new Date()
+): Promise<SessionDescriptor> {
+  const source = await readSession(project.rootPath, input.sourceSessionId);
+  const sourceEvents = await readSessionEvents(project.rootPath, input.sourceSessionId);
+  const throughIndex = sourceEvents.findIndex((event) => event.id === input.throughEventId);
+  if (throughIndex < 0) throw new Error("Session fork target event was not found.");
+
+  const forked = await createSession(project, {
+    title: input.title?.trim() || `Ответвление · ${source.title}`,
+    goal: source.goal,
+    context: source.context,
+    memoryMode: source.memoryMode
+  }, now);
+  for (const [index, event] of sourceEvents.slice(0, throughIndex + 1).entries()) {
+    await appendSessionEvent(project.rootPath, forked.id, {
+      type: event.type,
+      data: event.data
+    }, new Date(now.getTime() + index + 1));
+  }
+  return readSession(project.rootPath, forked.id);
+}
+
 export async function updateSession(
   rootPath: string,
   sessionId: string,

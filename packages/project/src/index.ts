@@ -14,6 +14,7 @@ export {
 export {
   appendSessionEvent,
   createSession,
+  forkSession,
   listSessions,
   readSession,
   readSessionEvents,

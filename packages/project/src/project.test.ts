@@ -8,6 +8,7 @@ import {
   createProject,
   createProjectFolder,
   createSession,
+  forkSession,
   getProjectOverview,
   importAsset,
   listAssets,
@@ -245,6 +246,27 @@ describe("project operations", () => {
     const events = await readSessionEvents(rootPath, session.id);
     expect(events.map((event) => event.sequence)).toEqual(Array.from({ length: 20 }, (_, index) => index));
     expect(new Set(events.map((event) => event.id)).size).toBe(20);
+  });
+
+  it("forks a session through the selected response without changing the source", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    createdRoots.push(rootPath);
+    const project = await createProject({ rootPath, id: "session-fork", name: "Session fork" });
+    const source = await createSession(project, { title: "Research", goal: "Find evidence", memoryMode: "full" });
+    const user = await appendSessionEvent(rootPath, source.id, { type: "user-message", data: { content: "Question" } });
+    const answer = await appendSessionEvent(rootPath, source.id, { type: "assistant-message", data: { content: "Answer" } });
+    await appendSessionEvent(rootPath, source.id, { type: "user-message", data: { content: "Later question" } });
+
+    const forked = await forkSession(project, { sourceSessionId: source.id, throughEventId: answer.id });
+    const forkedEvents = await readSessionEvents(rootPath, forked.id);
+    expect(forked.title).toBe("Ответвление · Research");
+    expect(forked.goal).toBe(source.goal);
+    expect(forked.memoryMode).toBe("full");
+    expect(forkedEvents.map((event) => event.type)).toEqual(["user-message", "assistant-message"]);
+    expect(forkedEvents.map((event) => event.data.content)).toEqual(["Question", "Answer"]);
+    expect(forkedEvents.map((event) => event.sessionId)).toEqual([forked.id, forked.id]);
+    expect(forkedEvents.every((event) => ![user.id, answer.id].includes(event.id))).toBe(true);
+    expect(await readSessionEvents(rootPath, source.id)).toHaveLength(3);
   });
 
   it("recovers an interrupted trailing session event before the next append", async () => {
