@@ -1,3 +1,8 @@
+/**
+ * Project tree operations for notes and assets in folder-based projects.
+ * Scope-relative paths stay within their notes/ or assets/ roots.
+ */
+// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
 import { mkdir, readdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
 import type {

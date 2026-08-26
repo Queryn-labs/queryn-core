@@ -1,3 +1,8 @@
+/**
+ * Project lifecycle and overview operations for folder-based Osnova projects.
+ * A manifest is the source of truth, while known directories remain reconstructible.
+ */
+// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
 import { access, mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createManifest, readManifest, serializeManifest, type CreateManifestInput } from "@osnova/manifest";

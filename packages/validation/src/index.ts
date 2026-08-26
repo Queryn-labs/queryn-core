@@ -1,3 +1,7 @@
+/**
+ * Manifest and folder-structure validation for local Osnova projects.
+ * Validation reports issues without mutating the project.
+ */
 import { access } from "node:fs/promises";
 import path from "node:path";
 import type { OsnovaManifest, ValidationIssue, ValidationResult } from "@osnova/types";

@@ -1,3 +1,7 @@
+/**
+ * Public project-folder API for notes, assets, artifacts, sessions, and migrations.
+ * Operations keep the folder format as the durable project boundary.
+ */
 export { createProject, openProject, getProjectOverview, type CreateProjectInput } from "./project.js";
 export { createNote, readNote, updateNote, updateNoteDocument, listNotes, moveNote, type CreateNoteInput } from "./note.js";
 export { listAssets, importAsset, moveAsset } from "./asset.js";

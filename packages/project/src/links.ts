@@ -1,3 +1,8 @@
+/**
+ * Project-link discovery across notes and asset references.
+ * Links resolve against normalized project-relative paths without granting traversal access.
+ */
+// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
 import { readFile } from "node:fs/promises";
 import type { AssetSummary, NoteSummary, ProjectLink } from "@osnova/types";
 import { listNotes } from "./note.js";

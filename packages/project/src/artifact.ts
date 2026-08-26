@@ -1,3 +1,8 @@
+/**
+ * Artifact registration and publishing for the folder-based project format.
+ * Payloads enter project-owned paths only after canonical and size checks.
+ */
+// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
 import { createHash, randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { copyFile, lstat, mkdir, open, readFile, readdir, realpath, rename, rm, stat } from "node:fs/promises";
@@ -105,7 +110,7 @@ export async function publishArtifact(
     await rename(stagingDirectory, finalDirectory);
     finalDirectoryCreated = true;
 
-    const payloads: ArtifactPayload[] = [];
+    const payloads = [] as unknown as ArtifactDescriptor["payloads"];
     for (const staged of stagedPayloads) {
       const finalPath = path.join(finalDirectory, staged.relativeName);
       const payload = await describePayload(

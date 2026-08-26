@@ -1,3 +1,7 @@
+/**
+ * Manifest creation, loading, and serialization for folder-based projects.
+ * Manifest data remains portable JSON owned by the project folder.
+ */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { ExtensionRequirement, OsnovaManifest, ProjectFormatVersion, ProjectKind } from "@osnova/types";

@@ -1,3 +1,8 @@
+/**
+ * Session and event persistence for folder-based projects.
+ * Event appends preserve sequence order and repair only an interrupted trailing fragment.
+ */
+// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
 import { randomUUID } from "node:crypto";
 import { appendFile, mkdir, readFile, readdir } from "node:fs/promises";
 import path from "node:path";

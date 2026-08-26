@@ -1,6 +1,8 @@
 import { appendFile, mkdir, mkdtemp, readFile, rm, stat, symlink, writeFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   createNote,
@@ -35,12 +37,40 @@ import {
   updateNoteDocument,
   verifyArtifact
 } from "./index.js";
-import { slugifyIdentifier } from "./slug.js";
+import { slugify, slugifyIdentifier } from "./slug.js";
 
+interface SlugVector {
+  input: string;
+  output: string;
+}
+
+interface SlugVectors {
+  slugify: SlugVector[];
+  slugifyIdentifier: SlugVector[];
+}
+
+const slugVectorsPath = fileURLToPath(new URL("../../../../osnova-spec/contract/slug-vectors.json", import.meta.url));
+const slugVectors = JSON.parse(readFileSync(slugVectorsPath, "utf8")) as SlugVectors;
 const createdRoots: string[] = [];
 
 afterEach(async () => {
   await Promise.all(createdRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+});
+
+describe("slugify contract", () => {
+  it("matches the shared osnova-spec slugify vectors", () => {
+    expect(slugVectors.slugify.length).toBeGreaterThan(0);
+    for (const vector of slugVectors.slugify) {
+      expect(slugify(vector.input)).toBe(vector.output);
+    }
+  });
+
+  it("matches the shared osnova-spec identifier vectors", () => {
+    expect(slugVectors.slugifyIdentifier.length).toBeGreaterThan(0);
+    for (const vector of slugVectors.slugifyIdentifier) {
+      expect(slugifyIdentifier(vector.input)).toBe(vector.output);
+    }
+  });
 });
 
 describe("project operations", () => {

@@ -43,6 +43,9 @@ export async function migrateProject(
   const manifestPath = path.join(rootPath, MANIFEST_FILE);
   const created: string[] = [];
   await mkdir(backupDirectory, { recursive: true });
+  // Preserve the original manifest in project metadata so a failed migration
+  // can restore the exact bytes without making the folder format less portable.
+  // see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
   await copyFile(manifestPath, backupPath);
 
   try {

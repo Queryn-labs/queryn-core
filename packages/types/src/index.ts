@@ -1,3 +1,7 @@
+/**
+ * Shared domain types consumed across Osnova repositories.
+ * Generated contract types remain schema-derived, while handwritten types define core operations.
+ */
 import type {
   OsnovaManifest,
   SubjectMetadata,
