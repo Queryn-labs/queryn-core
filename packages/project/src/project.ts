@@ -1,23 +1,23 @@
 /**
- * Project lifecycle and overview operations for folder-based Osnova projects.
+ * Project lifecycle and overview operations for folder-based Queryn projects.
  * A manifest is the source of truth, while known directories remain reconstructible.
  */
-// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
+// see queryn-docs/docs/adr/adr-0003-folder-based-projects.md
 import { access, mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { createManifest, readManifest, serializeManifest, type CreateManifestInput } from "@osnova/manifest";
-import type { OsnovaProject, ProjectOverview, ValidationIssue } from "@osnova/types";
-import { assertValidManifest, validateManifest, validateProjectStructure } from "@osnova/validation";
+import { createManifest, readManifest, serializeManifest, type CreateManifestInput } from "@queryn/manifest";
+import type { QuerynProject, ProjectOverview, ValidationIssue } from "@queryn/types";
+import { assertValidManifest, validateManifest, validateProjectStructure } from "@queryn/validation";
 import { getErrorMessage } from "./errors.js";
 import { listNotes } from "./note.js";
 import { listAssets } from "./asset.js";
-import { MANIFEST_FILE, OSNOVA_DIR, REBORN_PROJECT_DIRS } from "./constants.js";
+import { MANIFEST_FILE, QUERYN_PROJECT_DIRS } from "./constants.js";
 
 export interface CreateProjectInput extends CreateManifestInput {
   rootPath: string;
 }
 
-export async function createProject(input: CreateProjectInput): Promise<OsnovaProject> {
+export async function createProject(input: CreateProjectInput): Promise<QuerynProject> {
   const manifest = createManifest(input);
 
   try {
@@ -36,8 +36,8 @@ export async function createProject(input: CreateProjectInput): Promise<OsnovaPr
 
   await mkdir(input.rootPath, { recursive: true });
   const projectDirectories = manifest.formatVersion === "0.2"
-    ? REBORN_PROJECT_DIRS
-    : (["notes", "assets", ".osnova"] as const);
+    ? QUERYN_PROJECT_DIRS
+    : (["notes", "assets", ".queryn"] as const);
   await Promise.all(projectDirectories.map((directory) => mkdir(path.join(input.rootPath, directory), { recursive: true })));
 
   await writeFile(path.join(input.rootPath, MANIFEST_FILE), serializeManifest(manifest), "utf8");
@@ -45,15 +45,15 @@ export async function createProject(input: CreateProjectInput): Promise<OsnovaPr
   return { rootPath: input.rootPath, manifest };
 }
 
-export async function openProject(rootPath: string): Promise<OsnovaProject> {
+export async function openProject(rootPath: string): Promise<QuerynProject> {
   const manifest = await readManifest(rootPath);
   assertValidManifest(manifest);
 
-  // A manifest proves this is an Osnova project; its derived state is safe to
+  // A manifest proves this is a Queryn project; its derived state is safe to
   // recreate and must never be required for portability.
   const projectDirectories = manifest.formatVersion === "0.2"
-    ? REBORN_PROJECT_DIRS
-    : (["notes", "assets", ".osnova"] as const);
+    ? QUERYN_PROJECT_DIRS
+    : (["notes", "assets", ".queryn"] as const);
   await Promise.all(projectDirectories.map((directory) => mkdir(path.join(rootPath, directory), { recursive: true })));
 
   const structure = await validateProjectStructure(rootPath, manifest.formatVersion);

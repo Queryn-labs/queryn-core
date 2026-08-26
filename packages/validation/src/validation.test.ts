@@ -27,7 +27,7 @@ describe("validateManifest", () => {
       id: "project",
       name: "Project",
       createdAt: "2026-07-22T00:00:00.000Z",
-      extensions: [{ id: "osnova.example.tool", version: "^1.0.0", enabled: true }]
+      extensions: [{ id: "queryn.example.tool", version: "^1.0.0", enabled: true }]
     });
 
     expect(result.valid).toBe(true);
@@ -52,7 +52,7 @@ describe("validateManifest", () => {
       id: "project",
       name: "Project",
       createdAt: "2026-07-22T00:00:00.000Z",
-      extensions: [{ id: "osnova.example.tool", version: ">=1.0.0" }]
+      extensions: [{ id: "queryn.example.tool", version: ">=1.0.0" }]
     });
 
     expect(result.valid).toBe(false);

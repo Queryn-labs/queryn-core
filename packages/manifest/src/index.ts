@@ -1,10 +1,10 @@
 /**
- * Manifest creation, loading, and serialization for folder-based projects.
+ * Manifest creation, loading, and serialization for folder-based Queryn projects.
  * Manifest data remains portable JSON owned by the project folder.
  */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { ExtensionRequirement, OsnovaManifest, ProjectFormatVersion, ProjectKind } from "@osnova/types";
+import type { ExtensionRequirement, QuerynManifest, ProjectFormatVersion, ProjectKind } from "@queryn/types";
 
 export interface CreateManifestInput {
   id: string;
@@ -17,7 +17,7 @@ export interface CreateManifestInput {
   extensions?: ExtensionRequirement[];
 }
 
-export function createManifest(input: CreateManifestInput, now = new Date()): OsnovaManifest {
+export function createManifest(input: CreateManifestInput, now = new Date()): QuerynManifest {
   return {
     formatVersion: input.formatVersion ?? "0.2",
     id: input.id,
@@ -32,12 +32,12 @@ export function createManifest(input: CreateManifestInput, now = new Date()): Os
   };
 }
 
-export async function readManifest(projectPath: string): Promise<OsnovaManifest> {
-  const manifestPath = path.join(projectPath, "osnova.json");
+export async function readManifest(projectPath: string): Promise<QuerynManifest> {
+  const manifestPath = path.join(projectPath, "queryn.json");
   const raw = await readFile(manifestPath, "utf8");
-  return JSON.parse(raw) as OsnovaManifest;
+  return JSON.parse(raw) as QuerynManifest;
 }
 
-export function serializeManifest(manifest: OsnovaManifest): string {
+export function serializeManifest(manifest: QuerynManifest): string {
   return `${JSON.stringify(manifest, null, 2)}\n`;
 }

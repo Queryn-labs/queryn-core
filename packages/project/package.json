@@ -1,5 +1,5 @@
 {
-  "name": "@osnova/project",
+  "name": "@queryn/project",
   "version": "0.2.0",
   "type": "module",
   "license": "MIT",
@@ -15,8 +15,8 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@osnova/manifest": "workspace:0.2.0",
-    "@osnova/types": "workspace:0.2.0",
-    "@osnova/validation": "workspace:0.2.0"
+    "@queryn/manifest": "workspace:0.2.0",
+    "@queryn/types": "workspace:0.2.0",
+    "@queryn/validation": "workspace:0.2.0"
   }
 }

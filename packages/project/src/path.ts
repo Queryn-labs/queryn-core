@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { ProjectTreeScope } from "@osnova/types";
+import type { ProjectTreeScope } from "@queryn/types";
 import { ASSETS_DIR, NOTES_DIR } from "./constants.js";
 
 export function sanitizePathSegment(value: string): string {

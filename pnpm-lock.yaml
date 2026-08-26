@@ -20,19 +20,19 @@ importers:
 
   packages/manifest:
     dependencies:
-      '@osnova/types':
+      '@queryn/types':
         specifier: workspace:0.2.0
         version: link:../types
 
   packages/project:
     dependencies:
-      '@osnova/manifest':
+      '@queryn/manifest':
         specifier: workspace:0.2.0
         version: link:../manifest
-      '@osnova/types':
+      '@queryn/types':
         specifier: workspace:0.2.0
         version: link:../types
-      '@osnova/validation':
+      '@queryn/validation':
         specifier: workspace:0.2.0
         version: link:../validation
 
@@ -40,7 +40,7 @@ importers:
 
   packages/validation:
     dependencies:
-      '@osnova/types':
+      '@queryn/types':
         specifier: workspace:0.2.0
         version: link:../types
 

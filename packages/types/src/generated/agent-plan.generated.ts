@@ -1,5 +1,5 @@
 /**
- * Generated from the osnova-spec contract schemas (scripts/generate-contracts.mjs).
+ * Generated from the queryn-spec contract schemas (scripts/generate-contracts.mjs).
  * Do not edit by hand: change the schema and regenerate.
  */
 

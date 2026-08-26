@@ -1,5 +1,5 @@
 {
-  "name": "osnova-core",
+  "name": "queryn-core",
   "version": "0.2.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "clean": "node -e \"for (const p of ['types','manifest','validation','project']) require('node:fs').rmSync('packages/'+p+'/dist',{recursive:true,force:true})\"",
     "test": "vitest run",
     "lint": "tsc --noEmit -p tsconfig.json",
-    "pretest": "node ../osnova-spec/scripts/generate-contracts.mjs --check && node ../osnova-spec/scripts/check-comment-hygiene.mjs --check --repo osnova-core"
+    "pretest": "node ../queryn-spec/scripts/generate-contracts.mjs --check && node ../queryn-spec/scripts/check-comment-hygiene.mjs --check --repo queryn-core"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",

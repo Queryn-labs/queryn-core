@@ -1,11 +1,11 @@
-export const MANIFEST_FILE = "osnova.json";
+export const MANIFEST_FILE = "queryn.json";
 export const NOTES_DIR = "notes";
 export const ASSETS_DIR = "assets";
-export const OSNOVA_DIR = ".osnova";
+export const QUERYN_DIR = ".queryn";
 export const ARTIFACTS_DIR = "artifacts";
 export const SESSIONS_DIR = "sessions";
 export const RELATIONS_DIR = "relations";
-export const REBORN_PROJECT_DIRS = [NOTES_DIR, ASSETS_DIR, ARTIFACTS_DIR, SESSIONS_DIR, RELATIONS_DIR, OSNOVA_DIR] as const;
+export const QUERYN_PROJECT_DIRS = [NOTES_DIR, ASSETS_DIR, ARTIFACTS_DIR, SESSIONS_DIR, RELATIONS_DIR, QUERYN_DIR] as const;
 export const RESERVED_PROJECT_ENTRIES = new Set([
   MANIFEST_FILE,
   NOTES_DIR,
@@ -13,5 +13,5 @@ export const RESERVED_PROJECT_ENTRIES = new Set([
   ARTIFACTS_DIR,
   SESSIONS_DIR,
   RELATIONS_DIR,
-  OSNOVA_DIR
+  QUERYN_DIR
 ]);

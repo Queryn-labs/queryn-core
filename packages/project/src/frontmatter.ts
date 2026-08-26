@@ -2,8 +2,8 @@
  * Frontmatter parsing and updates for Markdown notes in folder-based projects.
  * Malformed or absent frontmatter leaves the original note body unchanged.
  */
-// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
-import type { NoteSummary } from "@osnova/types";
+// see queryn-docs/docs/adr/adr-0003-folder-based-projects.md
+import type { NoteSummary } from "@queryn/types";
 
 export function unquoteYamlScalar(value: string): string {
   return value.replace(/^["']|["']$/g, "");
