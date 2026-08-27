@@ -1,12 +1,12 @@
 /**
- * Generated from the osnova-spec contract schemas (scripts/generate-contracts.mjs).
+ * Generated from the queryn-spec contract schemas (scripts/generate-contracts.mjs).
  * Do not edit by hand: change the schema and regenerate.
  */
 
 export type ProjectFormatVersion = "0.1" | "0.2";
 export type ProjectKind = "general" | "subject" | "exam";
 
-export interface OsnovaManifest {
+export interface QuerynManifest {
   formatVersion: ProjectFormatVersion;
   id: string;
   name: string;

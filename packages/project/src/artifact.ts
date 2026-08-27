@@ -2,7 +2,7 @@
  * Artifact registration and publishing for the folder-based project format.
  * Payloads enter project-owned paths only after canonical and size checks.
  */
-// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
+// see queryn-docs/docs/adr/adr-0003-folder-based-projects.md
 import { createHash, randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { copyFile, lstat, mkdir, open, readFile, readdir, realpath, rename, rm, stat } from "node:fs/promises";
@@ -10,11 +10,11 @@ import path from "node:path";
 import type {
   ArtifactDescriptor,
   ArtifactPayload,
-  OsnovaProject,
+  QuerynProject,
   PublishArtifactInput,
   RegisterArtifactInput
-} from "@osnova/types";
-import { ARTIFACTS_DIR, OSNOVA_DIR } from "./constants.js";
+} from "@queryn/types";
+import { ARTIFACTS_DIR, QUERYN_DIR } from "./constants.js";
 import { detectMediaType } from "./media.js";
 import { normalizeProjectRelativePath, resolveProjectPath, toProjectRelativePath } from "./path.js";
 import { writeFileAtomic } from "./atomic.js";
@@ -23,7 +23,7 @@ import { slugifyIdentifier } from "./slug.js";
 const defaultMaxPayloadBytes = 256 * 1024 * 1024;
 
 export async function registerExistingArtifact(
-  project: OsnovaProject,
+  project: QuerynProject,
   input: RegisterArtifactInput,
   now = new Date()
 ): Promise<ArtifactDescriptor> {
@@ -57,7 +57,7 @@ export async function registerExistingArtifact(
 }
 
 export async function publishArtifact(
-  project: OsnovaProject,
+  project: QuerynProject,
   input: PublishArtifactInput,
   now = new Date()
 ): Promise<ArtifactDescriptor> {
@@ -70,7 +70,7 @@ export async function publishArtifact(
   const id = normalizeArtifactId(input.id ?? createArtifactId(input.title ?? input.type));
   const finalRelativeDirectory = `${ARTIFACTS_DIR}/data/${id}`;
   const finalDirectory = resolveProjectPath(project.rootPath, finalRelativeDirectory);
-  const stagingDirectory = path.join(project.rootPath, OSNOVA_DIR, "staging", `artifact-${id}-${randomUUID()}`);
+  const stagingDirectory = path.join(project.rootPath, QUERYN_DIR, "staging", `artifact-${id}-${randomUUID()}`);
   const maxPayloadBytes = input.maxPayloadBytes ?? defaultMaxPayloadBytes;
   const seenNames = new Set<string>();
   let finalDirectoryCreated = false;

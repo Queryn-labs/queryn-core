@@ -1,6 +1,6 @@
 import { copyFile, mkdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
-import type { AssetSummary, ImportAssetInput, MoveAssetInput, OsnovaProject } from "@osnova/types";
+import type { AssetSummary, ImportAssetInput, MoveAssetInput, QuerynProject } from "@queryn/types";
 import { normalizeScopeRelativePath, resolveProjectPath, resolveProjectRelativePath, resolveScopedPath, sanitizePathSegment, toProjectRelativePath } from "./path.js";
 import { createUniqueFilePath, listFiles } from "./io.js";
 import { detectMediaType } from "./media.js";
@@ -23,7 +23,7 @@ export async function listAssets(rootPath: string): Promise<AssetSummary[]> {
   return assets.sort(compareUpdatedDesc);
 }
 
-export async function importAsset(project: OsnovaProject, input: ImportAssetInput): Promise<AssetSummary> {
+export async function importAsset(project: QuerynProject, input: ImportAssetInput): Promise<AssetSummary> {
   const targetFolderRelativePath = normalizeScopeRelativePath(input.targetFolderRelativePath ?? "");
   const sourceName = sanitizePathSegment(path.basename(input.sourcePath));
   const targetFolderPath = resolveScopedPath(project.rootPath, "assets", targetFolderRelativePath);
@@ -35,7 +35,7 @@ export async function importAsset(project: OsnovaProject, input: ImportAssetInpu
   return readAssetSummary(project.rootPath, targetPath);
 }
 
-export async function moveAsset(project: OsnovaProject, input: MoveAssetInput): Promise<AssetSummary> {
+export async function moveAsset(project: QuerynProject, input: MoveAssetInput): Promise<AssetSummary> {
   const sourcePath = resolveAssetPath(project.rootPath, input.sourceRelativePath);
   const targetFolderPath = resolveScopedPath(project.rootPath, "assets", input.targetFolderRelativePath);
   const targetPath = await createUniqueFilePath(targetFolderPath, path.basename(sourcePath));

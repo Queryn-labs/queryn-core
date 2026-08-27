@@ -1,15 +1,15 @@
 /**
- * Shared domain types consumed across Osnova repositories.
+ * Shared domain types consumed across Queryn repositories.
  * Generated contract types remain schema-derived, while handwritten types define core operations.
  */
 import type {
-  OsnovaManifest,
+  QuerynManifest,
   SubjectMetadata,
   ExamMetadata,
   ExtensionRequirement,
   ProjectFormatVersion,
   ProjectKind
-} from "./generated/osnova.generated.js";
+} from "./generated/queryn.generated.js";
 import type {
   ArtifactDescriptor,
   Payload as ArtifactPayload,
@@ -26,7 +26,7 @@ import type { AgentPlan, Step as AgentStep } from "./generated/agent-plan.genera
 import type { JobDescriptor, JobStatus } from "./generated/job.generated.js";
 
 export type {
-  OsnovaManifest,
+  QuerynManifest,
   SubjectMetadata,
   ExamMetadata,
   ExtensionRequirement,
@@ -55,9 +55,9 @@ export type {
 
 
 
-export interface OsnovaProject {
+export interface QuerynProject {
   rootPath: string;
-  manifest: OsnovaManifest;
+  manifest: QuerynManifest;
 }
 
 export interface Note {
@@ -160,7 +160,7 @@ export interface ProjectLink {
 
 export interface ProjectOverview {
   rootPath: string;
-  manifest?: OsnovaManifest;
+  manifest?: QuerynManifest;
   validation: ValidationResult;
   counts: {
     notes: number;
@@ -306,7 +306,7 @@ export interface RuntimeDescriptor {
   entry?: string;
   image?: string;
   endpoint?: string;
-  protocol?: "osnova-tool-v1" | "mcp";
+  protocol?: "queryn-tool-v1" | "mcp";
   idleTimeoutSeconds?: number;
   resources?: OperationResources;
   models?: RuntimeModelDependency[];
@@ -353,7 +353,7 @@ export interface ProjectMigrationResult {
   dryRun: boolean;
   plan: ProjectMigrationPlan;
   backupPath?: string;
-  manifest: OsnovaManifest;
+  manifest: QuerynManifest;
 }
 
 export interface ProjectAdoptionCollision {
@@ -374,7 +374,7 @@ export interface ProjectAdoptionPlan {
 export interface ProjectAdoptionResult {
   dryRun: boolean;
   plan: ProjectAdoptionPlan;
-  manifest?: OsnovaManifest;
+  manifest?: QuerynManifest;
 }
 
 export interface ValidationIssue {

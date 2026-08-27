@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import type { ArtifactRelation, ArtifactRef } from "@osnova/types";
+import type { ArtifactRelation, ArtifactRef } from "@queryn/types";
 import { RELATIONS_DIR } from "./constants.js";
 import { readArtifact } from "./artifact.js";
 import { writeFileAtomic } from "./atomic.js";

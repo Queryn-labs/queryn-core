@@ -2,19 +2,19 @@
  * Project tree operations for notes and assets in folder-based projects.
  * Scope-relative paths stay within their notes/ or assets/ roots.
  */
-// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
+// see queryn-docs/docs/adr/adr-0003-folder-based-projects.md
 import { mkdir, readdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
 import type {
   CreateProjectFolderInput,
   NoteSummary,
   AssetSummary,
-  OsnovaProject,
+  QuerynProject,
   ProjectTree,
   ProjectTreeNode,
   ProjectTreeScope,
   MoveFolderInput
-} from "@osnova/types";
+} from "@queryn/types";
 import {
   joinScopeRelativePath,
   normalizeScopeRelativePath,
@@ -28,7 +28,7 @@ import { listNotes } from "./note.js";
 import { listAssets } from "./asset.js";
 import { isHiddenEntryName, isReservedProjectPath } from "./project-files.js";
 
-export async function createProjectFolder(project: OsnovaProject, input: CreateProjectFolderInput): Promise<ProjectTreeNode> {
+export async function createProjectFolder(project: QuerynProject, input: CreateProjectFolderInput): Promise<ProjectTreeNode> {
   const parentRelativePath = input.parentRelativePath ? normalizeScopeRelativePath(input.parentRelativePath) : "";
   const folderName = sanitizePathSegment(input.name);
   const folderRelativePath = joinScopeRelativePath(parentRelativePath, folderName);
@@ -48,7 +48,7 @@ export async function createProjectFolder(project: OsnovaProject, input: CreateP
   };
 }
 
-export async function moveProjectFolder(project: OsnovaProject, input: MoveFolderInput): Promise<void> {
+export async function moveProjectFolder(project: QuerynProject, input: MoveFolderInput): Promise<void> {
   const sourceRelativePath = normalizeScopeRelativePath(input.sourceRelativePath);
   const targetFolderRelativePath = normalizeScopeRelativePath(input.targetFolderRelativePath);
   const folderName = path.posix.basename(sourceRelativePath);

@@ -1,13 +1,13 @@
 import { access, mkdir, readdir } from "node:fs/promises";
 import path from "node:path";
-import { createManifest, readManifest, serializeManifest } from "@osnova/manifest";
+import { createManifest, readManifest, serializeManifest } from "@queryn/manifest";
 import type {
-  OsnovaManifest,
+  QuerynManifest,
   ProjectAdoptionCollision,
   ProjectAdoptionPlan,
   ProjectAdoptionResult
-} from "@osnova/types";
-import { MANIFEST_FILE, REBORN_PROJECT_DIRS } from "./constants.js";
+} from "@queryn/types";
+import { MANIFEST_FILE, QUERYN_PROJECT_DIRS } from "./constants.js";
 import { writeFileAtomic } from "./atomic.js";
 import { slugifyIdentifier } from "./slug.js";
 
@@ -20,7 +20,7 @@ export interface AdoptProjectInput {
 export async function inspectProjectAdoption(rootPath: string): Promise<ProjectAdoptionPlan> {
   const directoryName = path.basename(path.resolve(rootPath));
   const missingDirectories: string[] = [];
-  for (const directory of REBORN_PROJECT_DIRS) {
+  for (const directory of QUERYN_PROJECT_DIRS) {
     try {
       await access(path.join(rootPath, directory));
     } catch {
@@ -37,7 +37,7 @@ export async function inspectProjectAdoption(rootPath: string): Promise<ProjectA
   }
 
   const collisions: ProjectAdoptionCollision[] = [];
-  for (const directory of REBORN_PROJECT_DIRS) {
+  for (const directory of QUERYN_PROJECT_DIRS) {
     if (missingDirectories.includes(directory)) continue;
     const entries = await readdir(path.join(rootPath, directory));
     if (entries.length > 0) {
@@ -74,7 +74,7 @@ export async function adoptProject(
   }
 
 
-  const manifest: OsnovaManifest = createManifest({
+  const manifest: QuerynManifest = createManifest({
     id: input.id ?? plan.suggestedId,
     name: input.name ?? plan.suggestedName,
     description: input.description,

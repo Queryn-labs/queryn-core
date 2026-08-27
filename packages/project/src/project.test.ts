@@ -49,7 +49,7 @@ interface SlugVectors {
   slugifyIdentifier: SlugVector[];
 }
 
-const slugVectorsPath = fileURLToPath(new URL("../../../../osnova-spec/contract/slug-vectors.json", import.meta.url));
+const slugVectorsPath = fileURLToPath(new URL("../../../../queryn-spec/contract/slug-vectors.json", import.meta.url));
 const slugVectors = JSON.parse(readFileSync(slugVectorsPath, "utf8")) as SlugVectors;
 const createdRoots: string[] = [];
 
@@ -58,14 +58,14 @@ afterEach(async () => {
 });
 
 describe("slugify contract", () => {
-  it("matches the shared osnova-spec slugify vectors", () => {
+  it("matches the shared queryn-spec slugify vectors", () => {
     expect(slugVectors.slugify.length).toBeGreaterThan(0);
     for (const vector of slugVectors.slugify) {
       expect(slugify(vector.input)).toBe(vector.output);
     }
   });
 
-  it("matches the shared osnova-spec identifier vectors", () => {
+  it("matches the shared queryn-spec identifier vectors", () => {
     expect(slugVectors.slugifyIdentifier.length).toBeGreaterThan(0);
     for (const vector of slugVectors.slugifyIdentifier) {
       expect(slugifyIdentifier(vector.input)).toBe(vector.output);
@@ -75,7 +75,7 @@ describe("slugify contract", () => {
 
 describe("project operations", () => {
   it("creates and opens a project", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -87,36 +87,36 @@ describe("project operations", () => {
     await expect(readFile(path.join(rootPath, "artifacts", "missing.json"), "utf8")).rejects.toThrow();
   });
 
-  it("recreates disposable .osnova state when opening a known project", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+  it("recreates disposable .queryn state when opening a known project", async () => {
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     await createProject({ rootPath, id: "test-project", name: "Test Project" });
-    await rm(path.join(rootPath, ".osnova"), { recursive: true, force: true });
+    await rm(path.join(rootPath, ".queryn"), { recursive: true, force: true });
 
     const project = await openProject(rootPath);
     expect(project.manifest.id).toBe("test-project");
-    expect((await stat(path.join(rootPath, ".osnova"))).isDirectory()).toBe(true);
+    expect((await stat(path.join(rootPath, ".queryn"))).isDirectory()).toBe(true);
   });
 
   it("does not silently initialize a non-empty folder as a project", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     await writeFile(path.join(rootPath, "unrelated.txt"), "keep me", "utf8");
 
     await expect(createProject({ rootPath, id: "test-project", name: "Test Project" })).rejects.toThrow("not empty");
     expect(await readFile(path.join(rootPath, "unrelated.txt"), "utf8")).toBe("keep me");
-    await expect(readFile(path.join(rootPath, "osnova.json"), "utf8")).rejects.toThrow();
+    await expect(readFile(path.join(rootPath, "queryn.json"), "utf8")).rejects.toThrow();
   });
 
   it("registers an existing project file as an artifact", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
     await writeFile(path.join(rootPath, "notes", "source.md"), "# Source\n", "utf8");
 
     const artifact = await registerExistingArtifact(project, {
       id: "source-note",
-      type: "osnova.note",
+      type: "queryn.note",
       title: "Source",
       projectRelativePath: "notes/source.md",
       context: { mode: "automatic" }
@@ -128,13 +128,13 @@ describe("project operations", () => {
     expect((await listArtifacts(rootPath)).map((item) => item.id)).toEqual(["source-note"]);
     expect(await verifyArtifact(rootPath, "source-note")).toEqual({ valid: true, issues: [] });
     await expect(registerExistingArtifact(project, {
-      type: "osnova.invalid-context", projectRelativePath: "notes/source.md", context: { mode: "custom" } as never
+      type: "queryn.invalid-context", projectRelativePath: "notes/source.md", context: { mode: "custom" } as never
     })).rejects.toThrow("namespaced provider id");
   });
 
   it("publishes outbox payloads under an atomic artifact directory", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
-    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "osnova-outbox-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
+    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "queryn-outbox-"));
     createdRoots.push(rootPath, outboxPath);
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
     const wav = Buffer.alloc(44);
@@ -153,14 +153,14 @@ describe("project operations", () => {
 
     const artifact = await publishArtifact(project, {
       id: "voice-1",
-      type: "osnova.audio",
+      type: "queryn.audio",
       title: "Voice",
       outboxPath,
       payloads: [{ path: "voice.wav", mediaType: "audio/wav", role: "primary" }],
       provenance: {
         source: "operation",
-        toolId: "osnova.example.tts",
-        operationId: "osnova.example.tts.synthesize",
+        toolId: "queryn.example.tts",
+        operationId: "queryn.example.tts.synthesize",
         runId: "run-1"
       },
       context: { mode: "none" }
@@ -172,26 +172,26 @@ describe("project operations", () => {
   });
 
   it("rejects a false declared MIME and rolls back final artifact data", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
-    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "osnova-outbox-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
+    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "queryn-outbox-"));
     createdRoots.push(rootPath, outboxPath);
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
     await writeFile(path.join(outboxPath, "fake.wav"), "this is not audio", "utf8");
     await expect(publishArtifact(project, {
-      id: "fake-audio", type: "osnova.audio", outboxPath,
+      id: "fake-audio", type: "queryn.audio", outboxPath,
       payloads: [{ path: "fake.wav", mediaType: "audio/wav" }], provenance: { source: "operation" }
     })).rejects.toThrow("MIME mismatch");
     await expect(readFile(path.join(rootPath, "artifacts", "data", "fake-audio", "fake.wav"))).rejects.toThrow();
   });
 
   it("rejects an oversized payload before copying it into the project", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
-    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "osnova-outbox-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
+    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "queryn-outbox-"));
     createdRoots.push(rootPath, outboxPath);
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
     await writeFile(path.join(outboxPath, "large.txt"), "12345", "utf8");
     await expect(publishArtifact(project, {
-      id: "too-large", type: "osnova.text", outboxPath,
+      id: "too-large", type: "queryn.text", outboxPath,
       payloads: [{ path: "large.txt", mediaType: "text/plain" }],
       provenance: { source: "operation" }, maxPayloadBytes: 4
     })).rejects.toThrow("exceeds 4 bytes");
@@ -199,15 +199,15 @@ describe("project operations", () => {
   });
 
   it("rejects traversal and symlink payloads from an outbox", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
-    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "osnova-outbox-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
+    const outboxPath = await mkdtemp(path.join(os.tmpdir(), "queryn-outbox-"));
     createdRoots.push(rootPath, outboxPath);
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
 
     await expect(
       publishArtifact(project, {
         id: "bad",
-        type: "osnova.file",
+        type: "queryn.file",
         outboxPath,
         payloads: [{ path: "../outside.txt" }],
         provenance: { source: "operation" }
@@ -215,14 +215,14 @@ describe("project operations", () => {
     ).rejects.toThrow("Path traversal");
 
     if (process.platform !== "win32") {
-      const outsidePath = await mkdtemp(path.join(os.tmpdir(), "osnova-outside-"));
+      const outsidePath = await mkdtemp(path.join(os.tmpdir(), "queryn-outside-"));
       createdRoots.push(outsidePath);
       await writeFile(path.join(outsidePath, "secret.txt"), "secret", "utf8");
       await symlink(outsidePath, path.join(outboxPath, "linked"), "dir");
       await expect(
         publishArtifact(project, {
           id: "symlink-parent",
-          type: "osnova.file",
+          type: "queryn.file",
           outboxPath,
           payloads: [{ path: "linked/secret.txt" }],
           provenance: { source: "operation" }
@@ -232,7 +232,7 @@ describe("project operations", () => {
   });
 
   it("persists portable session events with stable sequence numbers", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
     const session = await createSession(project, { id: "research", title: "Research", goal: "Find evidence" });
@@ -246,14 +246,14 @@ describe("project operations", () => {
   });
 
   it("generates portable ids for sessions and artifacts with non-Latin titles", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     const project = await createProject({ rootPath, id: "localized-project", name: "Localized Project" });
     await rm(path.join(rootPath, "sessions"), { recursive: true, force: true });
     const session = await createSession(project, { title: "Разобрать архитектуру трансформера" });
     const note = await createNote(project, { title: "Архитектура трансформера", body: "Контекст" });
     const artifact = await registerExistingArtifact(project, {
-      type: "osnova.note",
+      type: "queryn.note",
       title: note.title,
       projectRelativePath: note.relativePath
     });
@@ -265,7 +265,7 @@ describe("project operations", () => {
   });
 
   it("serializes concurrent events inside one session", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
     const session = await createSession(project, { id: "parallel", title: "Parallel work" });
@@ -279,7 +279,7 @@ describe("project operations", () => {
   });
 
   it("forks a session through the selected response without changing the source", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     const project = await createProject({ rootPath, id: "session-fork", name: "Session fork" });
     const source = await createSession(project, { title: "Research", goal: "Find evidence", memoryMode: "full" });
@@ -300,7 +300,7 @@ describe("project operations", () => {
   });
 
   it("recovers an interrupted trailing session event before the next append", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     const project = await createProject({ rootPath, id: "session-recovery", name: "Session recovery", formatVersion: "0.2" });
     const session = await createSession(project, { id: "recovery", title: "Recovery" });
@@ -314,7 +314,7 @@ describe("project operations", () => {
   });
 
   it("links arbitrary artifact types through namespaced relations", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
     await writeFile(path.join(rootPath, "notes", "one.md"), "one", "utf8");
@@ -326,7 +326,7 @@ describe("project operations", () => {
   });
 
   it("dry-runs and applies an explicit 0.1 to 0.2 migration", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
     await createProject({ rootPath, id: "legacy", name: "Legacy", formatVersion: "0.1" });
 
@@ -343,7 +343,7 @@ describe("project operations", () => {
   });
 
   it("creates a markdown note in notes", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -357,7 +357,7 @@ describe("project operations", () => {
   });
 
   it("creates folders and notes inside nested project folders", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -371,7 +371,7 @@ describe("project operations", () => {
   });
 
   it("reads and updates note content", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -388,7 +388,7 @@ describe("project operations", () => {
   });
 
   it("updates note document metadata and body without exposing frontmatter to the editor body", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -407,7 +407,7 @@ describe("project operations", () => {
   });
 
   it("hides a duplicate first heading from legacy note bodies", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -443,7 +443,7 @@ describe("project operations", () => {
   });
 
   it("returns a project overview for a valid project", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -457,7 +457,7 @@ describe("project operations", () => {
   });
 
   it("lists markdown notes ordered by update time", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -472,7 +472,7 @@ describe("project operations", () => {
   });
 
   it("lists project assets", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -490,8 +490,8 @@ describe("project operations", () => {
   });
 
   it("imports assets and creates unique names on conflict", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
-    const sourceRoot = await mkdtemp(path.join(os.tmpdir(), "osnova-source-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
+    const sourceRoot = await mkdtemp(path.join(os.tmpdir(), "queryn-source-"));
     createdRoots.push(rootPath, sourceRoot);
 
     const sourcePath = path.join(sourceRoot, "diagram.png");
@@ -506,7 +506,7 @@ describe("project operations", () => {
   });
 
   it("returns a stable project tree for notes and assets", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -523,7 +523,7 @@ describe("project operations", () => {
   });
 
   it("lists existing root markdown notes and files after adopting a folder", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -552,7 +552,7 @@ describe("project operations", () => {
   });
 
   it("hides dotfiles and dot directories from notes, assets and tree", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -578,7 +578,7 @@ describe("project operations", () => {
   });
 
   it("lists resolved and unresolved project links", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -597,7 +597,7 @@ describe("project operations", () => {
   });
 
   it("does not fail project links on traversal-like existing vault links", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -615,7 +615,7 @@ describe("project operations", () => {
   });
 
   it("moves project folders across scopes and rejects moving into itself", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
@@ -641,11 +641,11 @@ describe("project operations", () => {
   });
 
   it("returns validation issues for an incomplete project", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-core-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-core-"));
     createdRoots.push(rootPath);
 
     await writeFile(
-      path.join(rootPath, "osnova.json"),
+      path.join(rootPath, "queryn.json"),
       JSON.stringify({ formatVersion: "0.1", id: "broken", name: "Broken", createdAt: "2026-06-16T00:00:00.000Z" }),
       "utf8"
     );
@@ -653,13 +653,13 @@ describe("project operations", () => {
     const overview = await getProjectOverview(rootPath);
 
     expect(overview.validation.valid).toBe(false);
-    expect(overview.validation.issues.map((issue) => issue.path).sort()).toEqual([".osnova", "assets", "notes"]);
+    expect(overview.validation.issues.map((issue) => issue.path).sort()).toEqual([".queryn", "assets", "notes"]);
   });
 });
 
 describe("project adoption", () => {
   it("adopts a foreign directory without touching existing files", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-adoption-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-adoption-"));
     createdRoots.push(rootPath);
     await writeFile(path.join(rootPath, "thesis.md"), "# Thesis", "utf8");
 
@@ -672,7 +672,7 @@ describe("project adoption", () => {
 
     const dryRun = await adoptProject(rootPath, { name: "Adopted" }, { dryRun: true });
     expect(dryRun.dryRun).toBe(true);
-    await expect(readFile(path.join(rootPath, "osnova.json"), "utf8")).rejects.toThrow();
+    await expect(readFile(path.join(rootPath, "queryn.json"), "utf8")).rejects.toThrow();
 
     const result = await adoptProject(rootPath, { name: "Adopted" });
     expect(result.dryRun).toBe(false);
@@ -686,7 +686,7 @@ describe("project adoption", () => {
   });
 
   it("reports collisions for occupied reserved directories and refuses existing manifests", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-adoption-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-adoption-"));
     createdRoots.push(rootPath);
     await mkdir(path.join(rootPath, "assets"), { recursive: true });
     await writeFile(path.join(rootPath, "assets", "logo.png"), "image", "utf8");
@@ -702,7 +702,7 @@ describe("project adoption", () => {
 
 describe("session updates", () => {
   it("updates memoryMode and updatedAt on an existing session", async () => {
-    const rootPath = await mkdtemp(path.join(os.tmpdir(), "osnova-session-"));
+    const rootPath = await mkdtemp(path.join(os.tmpdir(), "queryn-session-"));
     createdRoots.push(rootPath);
     const project = await createProject({ rootPath, id: "test-project", name: "Test Project" });
     const session = await createSession(project, { title: "Memory check" });

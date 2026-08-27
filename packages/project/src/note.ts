@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { MoveNoteInput, NoteContent, NoteSummary, OsnovaProject, UpdateNoteDocumentInput } from "@osnova/types";
+import type { MoveNoteInput, NoteContent, NoteSummary, QuerynProject, UpdateNoteDocumentInput } from "@queryn/types";
 import { slugify } from "./slug.js";
 import {
   normalizeScopeRelativePath,
@@ -23,7 +23,7 @@ export interface CreateNoteInput {
   folderRelativePath?: string;
 }
 
-export async function createNote(project: OsnovaProject, input: CreateNoteInput): Promise<NoteSummary> {
+export async function createNote(project: QuerynProject, input: CreateNoteInput): Promise<NoteSummary> {
   const folderRelativePath = normalizeScopeRelativePath(input.folderRelativePath ?? "");
   const id = sanitizePathSegment(input.id ?? (slugify(input.title) || "untitled"));
   const notesFolderPath = resolveScopedPath(project.rootPath, "notes", folderRelativePath);
@@ -107,7 +107,7 @@ export async function listNotes(rootPath: string): Promise<NoteSummary[]> {
   return notes.sort(compareUpdatedDesc);
 }
 
-export async function moveNote(project: OsnovaProject, input: MoveNoteInput): Promise<NoteSummary> {
+export async function moveNote(project: QuerynProject, input: MoveNoteInput): Promise<NoteSummary> {
   const sourcePath = resolveNotePath(project.rootPath, input.sourceRelativePath);
   const targetFolderPath = resolveScopedPath(project.rootPath, "notes", input.targetFolderRelativePath);
   const targetPath = await createUniqueFilePath(targetFolderPath, path.basename(sourcePath));

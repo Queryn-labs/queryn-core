@@ -1,10 +1,10 @@
 /**
- * Manifest and folder-structure validation for local Osnova projects.
+ * Manifest and folder-structure validation for local Queryn projects.
  * Validation reports issues without mutating the project.
  */
 import { access } from "node:fs/promises";
 import path from "node:path";
-import type { OsnovaManifest, ValidationIssue, ValidationResult } from "@osnova/types";
+import type { QuerynManifest, ValidationIssue, ValidationResult } from "@queryn/types";
 
 const supportedKinds = new Set(["general", "subject", "exam"]);
 const supportedVersions = new Set(["0.1", "0.2"]);
@@ -55,8 +55,8 @@ export function validateManifest(value: unknown): ValidationResult {
 
 export async function validateProjectStructure(projectPath: string, formatVersion: "0.1" | "0.2" = "0.1"): Promise<ValidationResult> {
   const requiredPaths = formatVersion === "0.2"
-    ? ["osnova.json", "notes", "assets", "artifacts", "sessions", "relations", ".osnova"]
-    : ["osnova.json", "notes", "assets", ".osnova"];
+    ? ["queryn.json", "notes", "assets", "artifacts", "sessions", "relations", ".queryn"]
+    : ["queryn.json", "notes", "assets", ".queryn"];
   const issues: ValidationIssue[] = [];
 
   await Promise.all(
@@ -72,7 +72,7 @@ export async function validateProjectStructure(projectPath: string, formatVersio
   return { valid: issues.length === 0, issues };
 }
 
-export function assertValidManifest(value: unknown): asserts value is OsnovaManifest {
+export function assertValidManifest(value: unknown): asserts value is QuerynManifest {
   const result = validateManifest(value);
   if (!result.valid) {
     throw new Error(result.issues.map((issue) => `${issue.path}: ${issue.message}`).join("\n"));

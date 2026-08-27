@@ -1,9 +1,9 @@
 import { access, copyFile, mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { readManifest, serializeManifest } from "@osnova/manifest";
-import type { ProjectMigrationPlan, ProjectMigrationResult } from "@osnova/types";
-import { ARTIFACTS_DIR, MANIFEST_FILE, OSNOVA_DIR, RELATIONS_DIR, SESSIONS_DIR } from "./constants.js";
+import { readManifest, serializeManifest } from "@queryn/manifest";
+import type { ProjectMigrationPlan, ProjectMigrationResult } from "@queryn/types";
+import { ARTIFACTS_DIR, MANIFEST_FILE, QUERYN_DIR, RELATIONS_DIR, SESSIONS_DIR } from "./constants.js";
 import { writeFileAtomic } from "./atomic.js";
 
 const migrationDirectories = [ARTIFACTS_DIR, SESSIONS_DIR, RELATIONS_DIR];
@@ -38,14 +38,14 @@ export async function migrateProject(
     return { dryRun: Boolean(options.dryRun), plan, manifest: migratedManifest };
   }
 
-  const backupDirectory = path.join(rootPath, OSNOVA_DIR, "migrations", `0.1-to-0.2-${randomUUID()}`);
+  const backupDirectory = path.join(rootPath, QUERYN_DIR, "migrations", `0.1-to-0.2-${randomUUID()}`);
   const backupPath = path.join(backupDirectory, MANIFEST_FILE);
   const manifestPath = path.join(rootPath, MANIFEST_FILE);
   const created: string[] = [];
   await mkdir(backupDirectory, { recursive: true });
   // Preserve the original manifest in project metadata so a failed migration
   // can restore the exact bytes without making the folder format less portable.
-  // see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
+  // see queryn-docs/docs/adr/adr-0003-folder-based-projects.md
   await copyFile(manifestPath, backupPath);
 
   try {

@@ -2,18 +2,18 @@
  * Session and event persistence for folder-based projects.
  * Event appends preserve sequence order and repair only an interrupted trailing fragment.
  */
-// see osnova-docs/docs/adr/adr-0003-folder-based-projects.md
+// see queryn-docs/docs/adr/adr-0003-folder-based-projects.md
 import { randomUUID } from "node:crypto";
 import { appendFile, mkdir, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import type {
   AppendSessionEventInput,
   CreateSessionInput,
-  OsnovaProject,
+  QuerynProject,
   SessionDescriptor,
   SessionEvent,
   SessionStatus
-} from "@osnova/types";
+} from "@queryn/types";
 import { SESSIONS_DIR } from "./constants.js";
 import { slugifyIdentifier } from "./slug.js";
 import { writeFileAtomic } from "./atomic.js";
@@ -21,7 +21,7 @@ import { writeFileAtomic } from "./atomic.js";
 const sessionEventQueues = new Map<string, Promise<void>>();
 
 export async function createSession(
-  project: OsnovaProject,
+  project: QuerynProject,
   input: CreateSessionInput,
   now = new Date()
 ): Promise<SessionDescriptor> {
@@ -52,7 +52,7 @@ export async function readSession(rootPath: string, sessionId: string): Promise<
 }
 
 export async function forkSession(
-  project: OsnovaProject,
+  project: QuerynProject,
   input: { sourceSessionId: string; throughEventId: string; title?: string },
   now = new Date()
 ): Promise<SessionDescriptor> {
