@@ -3,7 +3,7 @@ import path from "node:path";
 import type { AssetSummary, ImportAssetInput, MoveAssetInput, QuerynProject } from "@queryn/types";
 import { normalizeScopeRelativePath, resolveProjectPath, resolveProjectRelativePath, resolveScopedPath, sanitizePathSegment, toProjectRelativePath } from "./path.js";
 import { createUniqueFilePath, listFiles } from "./io.js";
-import { detectMediaType } from "./media.js";
+import { classifyFile } from "./media.js";
 import { compareUpdatedDesc } from "./utils.js";
 import { isReservedProjectPath } from "./project-files.js";
 
@@ -50,15 +50,20 @@ async function readAssetSummary(rootPath: string, filePath: string): Promise<Ass
   const fileStat = await stat(filePath);
   const relativePath = toProjectRelativePath(rootPath, filePath);
   const name = path.basename(filePath);
+  const fileType = classifyFile(filePath);
 
   return {
     id: relativePath,
     path: filePath,
     relativePath,
     name,
-    mediaType: detectMediaType(filePath),
+    mediaType: fileType.mediaType,
     size: fileStat.size,
-    updatedAt: fileStat.mtime.toISOString()
+    updatedAt: fileStat.mtime.toISOString(),
+    previewKind: fileType.previewKind,
+    languageId: fileType.languageId,
+    iconKey: fileType.iconKey,
+    capabilities: fileType.capabilities
   };
 }
 

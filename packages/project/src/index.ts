@@ -28,3 +28,9 @@ export {
 export { inspectProjectMigration, migrateProject } from "./migration.js";
 export { createArtifactRelation, listArtifactRelations } from "./relation.js";
 export { adoptProject, inspectProjectAdoption, type AdoptProjectInput } from "./adoption.js";
+export {
+  FILE_TYPE_REGISTRY,
+  classifyFile,
+  describeFile,
+  detectMediaType
+} from "./media.js";

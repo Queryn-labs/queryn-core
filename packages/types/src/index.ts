@@ -93,11 +93,72 @@ export interface Asset {
   mediaType?: string;
 }
 
+/**
+ * Presentation modes shared by project assets and the desktop viewer.
+ * The values describe how a file can be inspected, not a promise of full
+ * application compatibility with the source format.
+ */
+export type FilePreviewKind =
+  | "text"
+  | "code"
+  | "markdown"
+  | "json"
+  | "xml"
+  | "table"
+  | "html"
+  | "pdf"
+  | "image"
+  | "audio"
+  | "video"
+  | "document"
+  | "spreadsheet"
+  | "presentation"
+  | "archive"
+  | "binary"
+  | "unknown";
+
+export type FileTypeConfidence = "extension" | "mime" | "mismatch" | "fallback";
+
+export interface FileCapabilities {
+  /** The application can render an inspection view for the file. */
+  canPreview: boolean;
+  /** The file can be opened in the lightweight in-app editor. */
+  canEdit: boolean;
+  /** The file has a known content representation, even if only metadata is shown. */
+  canRead: boolean;
+}
+
+export interface FileTypeDescriptor {
+  extension: string;
+  mediaType?: string;
+  previewKind: FilePreviewKind;
+  languageId?: string;
+  iconKey: string;
+  capabilities: FileCapabilities;
+  confidence: FileTypeConfidence;
+  /** True when the supplied MIME type and the filename point at different views. */
+  isExtensionMismatch: boolean;
+}
+
+/** A reusable registry entry before a filename and confidence are attached. */
+export interface FileTypeRegistryEntry {
+  mediaType: string;
+  previewKind: FilePreviewKind;
+  languageId?: string;
+  iconKey: string;
+  capabilities: FileCapabilities;
+}
+
 export interface AssetSummary extends Asset {
   name: string;
   relativePath: string;
   size: number;
   updatedAt: string;
+  /** Optional metadata added by newer clients while preserving the old asset shape. */
+  previewKind?: FilePreviewKind;
+  languageId?: string;
+  iconKey?: string;
+  capabilities?: FileCapabilities;
 }
 
 export type ProjectTreeScope = "notes" | "assets";

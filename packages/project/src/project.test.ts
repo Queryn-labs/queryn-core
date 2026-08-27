@@ -487,6 +487,8 @@ describe("project operations", () => {
       "assets/diagram.png"
     ]);
     expect(assets.find((asset) => asset.name === "diagram.png")?.mediaType).toBe("image/png");
+    expect(assets.find((asset) => asset.name === "diagram.png")?.previewKind).toBe("image");
+    expect(assets.find((asset) => asset.name === "source.zip")?.iconKey).toBe("file-archive");
   });
 
   it("imports assets and creates unique names on conflict", async () => {
