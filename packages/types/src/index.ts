@@ -299,6 +299,38 @@ export type RuntimeKind = "builtin" | "node-process" | "native-process" | "oci" 
 export type RuntimeLifecycle = "job" | "project" | "shared";
 export type RuntimeStatus = "stopped" | "starting" | "running" | "degraded" | "stopping" | "failed";
 
+/** The declared data recipient for model inference. */
+export type RecipientKind = "local" | "cloud";
+
+/** The protocol implemented by a model provider endpoint. */
+export type ModelProviderTransport = "openai-compatible";
+
+/** The credential flow presented by a provider template. */
+export type ModelProviderAuthMode = "none" | "api-key" | "cli-session";
+
+/** A declarative, non-secret provider preset exposed by the runtime catalog. */
+export interface ModelProviderTemplate {
+  id: string;
+  group: RecipientKind;
+  displayName: string;
+  description: string;
+  transport: ModelProviderTransport;
+  auth: ModelProviderAuthMode;
+  defaultProviderId: string;
+  defaultEndpoint?: string;
+}
+
+export interface OpenAICompatibleModelProviderConfig {
+  id: string;
+  templateId: string;
+  type: "openai-compatible";
+  endpoint: string;
+  credentialAccount?: string;
+  recipient: RecipientKind;
+}
+
+export type ModelProviderConfig = OpenAICompatibleModelProviderConfig;
+
 export interface RuntimeDescriptor {
   id: string;
   kind: RuntimeKind;
